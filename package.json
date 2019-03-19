@@ -46,14 +46,14 @@
     "menus": {
       "view/title": [
         {
-          "command": "PMTaskList.add",
-          "group": "navigation",
-          "when": "view == PMTaskList"
-        },
-        {
           "command": "PMTaskList.configure",
           "group": "navigation",
-          "when": "view == PMTaskList && viewItem == messageItem"
+          "when": "config.pm.projectId == "
+        },
+        {
+          "command": "PMTaskList.add",
+          "group": "navigation",
+          "when": "view == PMTaskList && config.pm.projectId != "
         }
       ],
       "view/item/context": [
@@ -125,7 +125,7 @@
             "string",
             "array"
           ],
-          "default": [],
+          "default": "",
           "markdownDescription": "Project **ID** for User configuration or Workspace configuration `recomended`"
         }
       }

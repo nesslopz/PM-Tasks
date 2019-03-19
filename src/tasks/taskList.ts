@@ -16,7 +16,7 @@ import * as path from 'path';
 import Messages from '../messages';
 //import teamworkProvider from '../pm/teamwork';
 
-export class TaskListProvider implements TreeDataProvider<Task | ItemMessage> {
+export class TaskListProvider implements TreeDataProvider<Task> {
 
 	private _onDidChangeTreeData: EventEmitter<Task | undefined> = new EventEmitter<Task | undefined>();
 	readonly onDidChangeTreeData: Event<Task | undefined> = this._onDidChangeTreeData.event;
@@ -32,22 +32,26 @@ export class TaskListProvider implements TreeDataProvider<Task | ItemMessage> {
     return element;
 	}
 
-	getChildren(element?: Task): Thenable<Task[] | ItemMessage[]> {
+	getChildren(element?: Task): Thenable<Task[]> {
 
     let projectId = this.pmSettings.get('projectId');
     console.log(projectId);
     if (!projectId || (Array.isArray(projectId) && projectId.length === 0)) {
       window.showWarningMessage(Messages.warning.noSettings);
 
-      return Promise.resolve([new ItemMessage('No PM configured in this project', 'algo', TreeItemCollapsibleState.None)]);
+      return Promise.resolve([new ItemMessage(Messages.warning.noSettings, { messageType: 'urgent' }, TreeItemCollapsibleState.None, {
+        title: "config",
+        command: "PMTaskList.configure",
+        tooltip: "string"
+      })]);
 		}
 
     return Promise.resolve(
       [
         new Task('Task 1', {date: 'date', who: 'who'}, TreeItemCollapsibleState.None),
         new Task('Task 1', {date: 'date', who: 'who'}, TreeItemCollapsibleState.None),
-        new Task('Task 1', {date: 'date', who: 'who'}, TreeItemCollapsibleState.None),
-        new Task('Task 1', {date: 'date', who: 'who'}, TreeItemCollapsibleState.None)
+        new Task("--Task 1--", {date: 'date', who: 'who'}, TreeItemCollapsibleState.None),
+        new Task("~~Task final~~", {date: 'date', who: 'who'}, TreeItemCollapsibleState.None)
       ]
     );
 
@@ -70,7 +74,7 @@ export class Task extends TreeItem {
 
 	constructor(
     public readonly title: string,
-    private data: TaskData,
+    public readonly data: TaskData,
 		public readonly collapsibleState: TreeItemCollapsibleState,
 		public readonly command?: Command
 	) {
@@ -89,33 +93,20 @@ export class Task extends TreeItem {
 		return `${this.data.date ? this.data.date : ''}`;
   }
 
-  hasChildrens () {
-    return true;
-  }
-
   // iconPath = {
   //   light: path.join(__filename, '..', '..', 'resources', 'light', (this.data.messageType ? this.data.messageType : 'date'), '.svg'),
   //   dark: path.join(__filename, '..', '..', 'resources', 'dark', (this.data.messageType ? this.data.messageType : 'date'), '.svg')
   // };
 
   iconPath = {
-		light: path.join(__filename, '..', '..', 'resources', 'light', 'dot.svg'),
-		dark: path.join(__filename, '..', '..', 'resources', 'dark', 'dot.svg')
+    light: path.join(__filename, '..', '..', '..', 'resources', 'light', 'dot.svg'),
+    dark: path.join(__filename, '..', '..', '..', 'resources', 'dark', 'dot.svg')
   };
 
 	contextValue = 'task';
 }
 
-export class ItemMessage extends TreeItem {
-
-	constructor(
-    public readonly title: string,
-    public readonly type: string,
-		public readonly collapsibleState: TreeItemCollapsibleState,
-		public readonly command?: Command
-	) {
-		super(title, collapsibleState);
-	}
+export class ItemMessage extends Task {
 
 	get tooltip(): string {
     return `${this.title}`;
@@ -126,8 +117,8 @@ export class ItemMessage extends TreeItem {
   }
 
   iconPath = {
-    light: path.join(__filename, '..', '..', 'resources', 'light', this.type, '.svg'),
-    dark: path.join(__filename, '..', '..', 'resources', 'dark', this.type, '.svg')
+    light: path.join(__filename, '..', '..', '..', 'resources', 'light', (this.data.messageType ? this.data.messageType : 'dot') + '.svg'),
+    dark: path.join(__filename, '..', '..', '..', 'resources', 'dark', (this.data.messageType ? this.data.messageType : 'dot') + '.svg')
   };
 
 	contextValue = 'itemMessage';
@@ -135,20 +126,7 @@ export class ItemMessage extends TreeItem {
 
 
 interface TaskData {
-		date?: any;
-		who?: string;
-		messageType?: string;
+  date?: any;
+  who?: string;
+  messageType?: string;
 }
-
-/**
- *   // commands.registerCommand('nodeDependencies.refreshEntry', () => nodeDependenciesProvider.refresh());
-
-  // 	commands.registerCommand('nodeDependencies.addEntry', () => window.showInformationMessage(`Successfully called add entry.`));
-	// commands.registerCommand('nodeDependencies.editEntry', (node: Dependency) => window.showInformationMessage(`Successfully called edit entry on ${node.label}.`));
-	// commands.registerCommand('nodeDependencies.deleteEntry', (node: Dependency) => window.showInformationMessage(`Successfully called delete entry on ${node.label}.`));
-	let addTaskCmd = commands.registerCommand('PMTaskList.create', () => {
-    window.showInformationMessage('Create a Task!');
-	});
-
-	context.subscriptions.push(addTaskCmd);
- */
