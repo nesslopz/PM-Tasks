@@ -1,38 +1,160 @@
 {
-	"name": "pm-tasks",
-	"displayName": "PM Tasks",
-	"description": "Project Manager tasks integrated in VSCode",
-	"version": "0.0.1",
-	"engines": {
-		"vscode": "^1.31.0"
-	},
-	"categories": [
-		"Other"
-	],
-	"activationEvents": [
-		"onCommand:extension.helloWorld"
-	],
-	"main": "./out/extension.js",
-	"contributes": {
-		"commands": [
-			{
-				"command": "extension.helloWorld",
-				"title": "Hello World"
-			}
-		]
-	},
-	"scripts": {
-		"vscode:prepublish": "npm run compile",
-		"compile": "tsc -p ./",
-		"watch": "tsc -watch -p ./",
-		"postinstall": "node ./node_modules/vscode/bin/install",
-		"test": "npm run compile && node ./node_modules/vscode/bin/test"
-	},
-	"devDependencies": {
-		"typescript": "^3.3.1",
-		"vscode": "^1.1.28",
-		"tslint": "^5.12.1",
-		"@types/node": "^10.12.21",
-		"@types/mocha": "^2.2.42"
-	}
+  "name": "pm-tasks",
+  "displayName": "PM Tasks",
+  "description": "Project Manager tasks integrated in VSCode",
+  "publisher": "nesslopz",
+  "version": "0.0.1",
+  "license": "ISC",
+  "preview": true,
+  "icon": "resources/icon.png",
+  "engines": {
+    "vscode": "^1.31.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "Project Managment",
+    "To-DO Tasks",
+    "Teamwork",
+    "Tasklist",
+    "Projects"
+  ],
+  "activationEvents": [
+    "onView:PMTaskList",
+    "onCommand:PMTaskList.add"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "PMTasksView",
+          "title": "PM Tasks",
+          "icon": "resources/pm-tasks.svg"
+        }
+      ]
+    },
+    "views": {
+      "PMTasksView": [
+        {
+          "id": "PMTaskList",
+          "name": "All"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "PMTaskList.add",
+          "group": "navigation",
+          "when": "view == PMTaskList"
+        },
+        {
+          "command": "PMTaskList.configure",
+          "group": "navigation",
+          "when": "view == PMTaskList && viewItem == messageItem"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "PMTaskList.complete",
+          "when": "view == PMTaskList && viewItem == task",
+          "group": "inline"
+        },
+        {
+          "command": "PMTaskList.edit",
+          "when": "view == PMTaskList && viewItem == task"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "PMTaskList.add",
+        "title": "New",
+        "category": "PM Tasks",
+        "icon": {
+          "dark": "resources/dark/add.svg",
+          "light": "resources/light/add.svg"
+        }
+      },
+      {
+        "command": "PMTaskList.edit",
+        "title": "Edit",
+        "category": "PM Tasks",
+        "icon": {
+          "dark": "resources/dark/edit.svg",
+          "light": "resources/light/edit.svg"
+        }
+      },
+      {
+        "command": "PMTaskList.configure",
+        "title": "Configure Project",
+        "category": "PM Tasks",
+        "icon": {
+          "dark": "resources/dark/config.svg",
+          "light": "resources/light/config.svg"
+        }
+      },
+      {
+        "command": "PMTaskList.complete",
+        "title": "Mark as completed",
+        "category": "PM Tasks",
+        "icon": {
+          "dark": "resources/dark/complete.svg",
+          "light": "resources/light/complete.svg"
+        }
+      }
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "PM Tasks",
+      "properties": {
+        "pm.teamworkToken": {
+          "type": "string",
+          "default": null,
+          "description": "Your Teamwork token to enable and use it"
+        },
+        "pm.autoSync": {
+          "type": "boolean",
+          "default": true,
+          "description": "Auto Sync tasks"
+        },
+        "pm.projectId": {
+          "type": [
+            "string",
+            "array"
+          ],
+          "default": [],
+          "markdownDescription": "Project **ID** for User configuration or Workspace configuration `recomended`"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "postinstall": "node ./node_modules/vscode/bin/install",
+    "test": "npm run compile && node ./node_modules/vscode/bin/test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^2.2.42",
+    "@types/node": "^10.12.30",
+    "tslint": "^5.12.1",
+    "typescript": "^3.3.1",
+    "vscode": "^1.1.28"
+  },
+  "bugs": {
+    "url": "https://github.com/nesslopz/PM-Tasks/issues",
+    "email": "me@nesslopz.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nesslopz/PM-Tasks.git"
+  },
+  "homepage": "https://github.com/nesslopz/PM-Tasks/blob/master/README.md",
+  "dependencies": {
+    "request-light": "^0.2.4"
+  }
 }
