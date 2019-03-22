@@ -1,7 +1,7 @@
 import { ExtensionContext, ConfigurationTarget, Uri, commands, workspace,  window } from 'vscode';
 // JSON Objects for data
 import Messages from '../messages';
-import Providers from '../providers';
+import Providers, { Provider } from '../providers';
 
 // Providers
 import Teamwork from '../pm/teamwork';
@@ -18,19 +18,23 @@ export function tasksCommands(context: ExtensionContext) {
         workspaceFolder = await window.showWorkspaceFolderPick({ placeHolder: 'Pick Workspace Folder to configure a Project Managment',  })
       }
       // Get Provider from available list
-      const pmProvider = await window.showQuickPick(Providers.map(pm => pm), {
+      const pmProvider = await window.showQuickPick(Providers, {
         placeHolder: Messages.helpers.selectPm,
         ignoreFocusOut: true
       });
 
       if (pmProvider) {
+
+        const provider = new Provider(pmProvider.id);
+
+
         // Get token for this provider
-        let token = await getToken(pmProvider.id);
+        let token:string|boolean = await provider.getToken(pmProvider.id);
 
         // Request token if not exists
         if (!token) {
           // Show help for get token from provider
-          let success = await commands.executeCommand('vscode.open', Uri.parse(pmProvider.messages.getToken));
+          await commands.executeCommand('vscode.open', Uri.parse(pmProvider.messages.getToken));
 
           let newToken = await window.showInputBox({
             ignoreFocusOut: true,
@@ -38,7 +42,7 @@ export function tasksCommands(context: ExtensionContext) {
           });
 
           if (newToken) {
-            setToken(pmProvider.id, newToken);
+            provider.setToken(pmProvider.id, newToken);
           }
 
         }
@@ -70,6 +74,9 @@ export function tasksCommands(context: ExtensionContext) {
     }
   });
 
+  /**
+   * Get tasks from Provider
+   */
   let addTask = commands.registerCommand('PMTaskList.addTask', () => window.showInformationMessage('Create a Task!'));
   let editTask = commands.registerCommand('PMTask.editTask', task => window.showWarningMessage(`Edit ${task.label}`))
   let deleteTask = commands.registerCommand('PMTask.deleteTask', task => window.showErrorMessage(`Delete ${task.label}`))
@@ -81,24 +88,5 @@ export function tasksCommands(context: ExtensionContext) {
   context.subscriptions.push(editTask);
   context.subscriptions.push(deleteTask);
   context.subscriptions.push(completeTask);
-
-  /**
-   *
-   * @param provider ID of provider
-   * @return value | false
-   */
-  const getToken = async (provider:string) => {
-    return await workspace.getConfiguration('pm').get(`${provider}Token`, false);
-  }
-
-  /**
-   *
-   * @param provider ID of provider
-   * @param token token for provider
-   * @return boolean
-   */
-  const setToken = async (provider:string, token:string) => {
-    return await workspace.getConfiguration('pm').update(`${provider}Token`, token, ConfigurationTarget.Global);
-  }
 
 }

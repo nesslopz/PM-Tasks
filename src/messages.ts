@@ -10,9 +10,11 @@ const Messages = {
   },
   helpers: {
     configure: "Set a Project Managment for this project",
-    selectPm: "Select the Project Managment software for this project",
+    insertProjectId: "Insert the Project ID ",
     insertToken: "Insert the Token for this Project Managment",
-    insertProjectId: "Insert the Project ID "
+    noTasks: "0 Tasks",
+    emptyTasks: "There is not tasks in this project / tasklist or is not correctly configured",
+    selectPm: "Select the Project Managment software for this project"
   }
 };
 

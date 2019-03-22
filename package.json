@@ -135,8 +135,8 @@
                 ]
               },
               "projectId": {
-                "type": "string",
-                "description": "Id of Project with Tasks for this project"
+                "type": ["string", "array"],
+                "markdownDescription": "Id of Project with Tasks for this project, _optional:_ `array` with ID's"
               }
             }
           },

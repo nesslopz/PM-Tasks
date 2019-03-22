@@ -14,12 +14,13 @@ import {
 import * as path from 'path';
 
 import Messages from '../messages';
-//import teamworkProvider from '../pm/teamwork';
+import { Provider } from '../providers';
 
 export class TaskListProvider implements TreeDataProvider<Task> {
 
 	private _onDidChangeTreeData: EventEmitter<Task | undefined> = new EventEmitter<Task | undefined>();
 	readonly onDidChangeTreeData: Event<Task | undefined> = this._onDidChangeTreeData.event;
+  public providers:any = [];
 
 	constructor(private pmSettings: WorkspaceConfiguration) {
     workspace.onDidChangeConfiguration(changed => {
@@ -58,17 +59,28 @@ export class TaskListProvider implements TreeDataProvider<Task> {
         ]);
       }
 
-      /**
+      // const tasks = [...this.providers.map(provider => provider.getTasks())]
+      let tasks:any = [];
+
+      if (tasks) {
+       /**
        * Return tasks
        */
-      return Promise.resolve(
-        [
-          new Task('Task 1', {date: 'date', who: 'who'}, TreeItemCollapsibleState.None),
-          new Task('Task 1', {date: 'date', who: 'who'}, TreeItemCollapsibleState.None),
-          new Task("--Task 1--", {date: 'date', who: 'who'}, TreeItemCollapsibleState.None),
-          new Task("~~Task final~~", {date: 'date', who: 'who'}, TreeItemCollapsibleState.None)
-        ]
-      );
+        return Promise.resolve(tasks);
+      } else {
+        /**
+         * Return message of empty tasks
+         */
+        return Promise.resolve([
+          new ItemMessage(Messages.helpers.noTasks, { messageType: 'none' }, TreeItemCollapsibleState.None,
+          {
+            command: 'vscode.open',
+            tooltip: Messages.helpers.emptyTasks,
+            title: 'Open'
+          })
+        ]);
+      }
+
 
     } else {
       // There is no workspace or folder open
@@ -98,6 +110,27 @@ export class TaskListProvider implements TreeDataProvider<Task> {
       window.showWarningMessage(Messages.warning.noSettings);
       isConfigured = false;
     } else {
+      // get all managers names without duplicates
+      let managerList = Array.from(new Set(taskListSettings.map(project => project.projectManager)));
+      // Initialize provider
+      managerList.map(manager => {
+        this.providers.push(new Provider(manager));
+      });
+      // Remove duplicated values from config
+      // let newSettings = taskListSettings.map(project => {
+      //   return taskListSettings.reduce((prev, next) => (prev.projectManager || '') != next {
+      //     projectManager: project.projectManager,
+      //     projectId: project.projectId
+      //   };
+      // });
+      // console.log(newSettings);
+      // // [
+      // //   ...taskListSettings,
+      // //   {
+      // //   projectId: projectId,
+      // //   projectManager: pmProvider.id
+      // // }];
+      // await pmSettings.update('taskList', newSettings, workspaceFolder ? ConfigurationTarget.WorkspaceFolder : ConfigurationTarget.Workspace);
       isConfigured = true;
     }
     commands.executeCommand('setContext', 'isProjectConfigured', isConfigured);
@@ -120,7 +153,7 @@ export class Task extends TreeItem {
 	get tooltip(): string {
     let title = this.title;
     let date = this.data.date ? `[${this.data.date}]` : '';
-    let who = this.data.who ? `@${this.data.who}` : '';
+    let who = this.data.who ? `${this.data.who}` : '';
 
     return `${title} ${date} ${who}`;
 	}

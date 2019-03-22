@@ -1,7 +1,7 @@
 'use strict';
 import { window, workspace, ExtensionContext } from 'vscode';
 
-import { TaskListProvider, Task } from './tasks/taskList';
+import { TaskListProvider } from './tasks/taskList';
 import { tasksCommands } from "./tasks/tasksCommands";
 
 // Activated
