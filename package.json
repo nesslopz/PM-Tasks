@@ -22,7 +22,8 @@
   ],
   "activationEvents": [
     "onView:PMTaskList",
-    "onCommand:PMTaskList.add"
+    "onCommand:PMTaskList.addTask",
+    "onCommand:PMTaskList.configure"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -48,43 +49,38 @@
         {
           "command": "PMTaskList.configure",
           "group": "navigation",
-          "when": "config.pm.projectId == "
+          "when": "view == PMTaskList && !isProjectConfigured"
         },
         {
-          "command": "PMTaskList.add",
+          "command": "PMTaskList.addTask",
           "group": "navigation",
-          "when": "view == PMTaskList && config.pm.projectId != "
+          "when": "view == PMTaskList && isProjectConfigured"
         }
       ],
       "view/item/context": [
         {
-          "command": "PMTaskList.complete",
+          "command": "PMTask.completeTask",
           "when": "view == PMTaskList && viewItem == task",
           "group": "inline"
         },
         {
-          "command": "PMTaskList.edit",
+          "command": "PMTask.deleteTask",
+          "when": "view == PMTaskList && viewItem == task"
+        },
+        {
+          "command": "PMTask.editTask",
           "when": "view == PMTaskList && viewItem == task"
         }
       ]
     },
     "commands": [
       {
-        "command": "PMTaskList.add",
+        "command": "PMTaskList.addTask",
         "title": "New",
         "category": "PM Tasks",
         "icon": {
           "dark": "resources/dark/add.svg",
           "light": "resources/light/add.svg"
-        }
-      },
-      {
-        "command": "PMTaskList.edit",
-        "title": "Edit",
-        "category": "PM Tasks",
-        "icon": {
-          "dark": "resources/dark/edit.svg",
-          "light": "resources/light/edit.svg"
         }
       },
       {
@@ -97,19 +93,55 @@
         }
       },
       {
-        "command": "PMTaskList.complete",
+        "command": "PMTask.completeTask",
         "title": "Mark as completed",
         "category": "PM Tasks",
         "icon": {
           "dark": "resources/dark/complete.svg",
           "light": "resources/light/complete.svg"
         }
+      },
+      {
+        "command": "PMTask.editTask",
+        "title": "Edit",
+        "category": "PM Tasks",
+        "icon": {
+          "dark": "resources/dark/edit.svg",
+          "light": "resources/light/edit.svg"
+        }
+      },
+      {
+        "command": "PMTask.deleteTask",
+        "title": "Delete",
+        "category": "PM Tasks"
       }
     ],
     "configuration": {
       "type": "object",
       "title": "PM Tasks",
       "properties": {
+        "pm.taskList": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "object",
+            "required": ["projectManager", "projectId"],
+            "properties": {
+              "projectManager": {
+                "type": "string",
+                "markdownDescription": "ID of Project Managment software _(available in config list selector)_",
+                "enum": [
+                  "teamwork"
+                ]
+              },
+              "projectId": {
+                "type": "string",
+                "description": "Id of Project with Tasks for this project"
+              }
+            }
+          },
+          "markdownDescription": "Task List configuration to save in Workspace `recomended` "
+        },
         "pm.teamworkToken": {
           "type": "string",
           "default": null,
@@ -119,14 +151,6 @@
           "type": "boolean",
           "default": true,
           "description": "Auto Sync tasks"
-        },
-        "pm.projectId": {
-          "type": [
-            "string",
-            "array"
-          ],
-          "default": "",
-          "markdownDescription": "Project **ID** for User configuration or Workspace configuration `recomended`"
         }
       }
     }
@@ -140,10 +164,10 @@
   },
   "devDependencies": {
     "@types/mocha": "^2.2.42",
-    "@types/node": "^10.12.30",
-    "tslint": "^5.12.1",
-    "typescript": "^3.3.1",
-    "vscode": "^1.1.28"
+    "@types/node": "^10.14.1",
+    "tslint": "^5.14.0",
+    "typescript": "^3.3.4000",
+    "vscode": "^1.1.32"
   },
   "bugs": {
     "url": "https://github.com/nesslopz/PM-Tasks/issues",

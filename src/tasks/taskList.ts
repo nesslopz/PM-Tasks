@@ -22,6 +22,14 @@ export class TaskListProvider implements TreeDataProvider<Task> {
 	readonly onDidChangeTreeData: Event<Task | undefined> = this._onDidChangeTreeData.event;
 
 	constructor(private pmSettings: WorkspaceConfiguration) {
+    workspace.onDidChangeConfiguration(changed => {
+      // let initialSettings = this.pmSettings;
+      if (changed.affectsConfiguration('pm')) {
+        this.pmSettings = workspace.getConfiguration('pm');
+        this.validateConfig()
+        this.refresh();
+      }
+    });
 	}
 
 	refresh(): void {
@@ -34,39 +42,67 @@ export class TaskListProvider implements TreeDataProvider<Task> {
 
 	getChildren(element?: Task): Thenable<Task[]> {
 
-    let projectId = this.pmSettings.get('projectId');
-    console.log(projectId);
-    if (!projectId || (Array.isArray(projectId) && projectId.length === 0)) {
+    if (workspace.workspaceFolders) {
+
+      const isConfigured = this.validateConfig();
+
+      if (!isConfigured) {
+        // Return item with message and configure command
+        return Promise.resolve([
+          new ItemMessage(Messages.warning.noSettings, { messageType: 'urgent' }, TreeItemCollapsibleState.None,
+          {
+            title: "config",
+            command: "PMTaskList.configure",
+            tooltip: Messages.helpers.configure
+          })
+        ]);
+      }
+
+      /**
+       * Return tasks
+       */
+      return Promise.resolve(
+        [
+          new Task('Task 1', {date: 'date', who: 'who'}, TreeItemCollapsibleState.None),
+          new Task('Task 1', {date: 'date', who: 'who'}, TreeItemCollapsibleState.None),
+          new Task("--Task 1--", {date: 'date', who: 'who'}, TreeItemCollapsibleState.None),
+          new Task("~~Task final~~", {date: 'date', who: 'who'}, TreeItemCollapsibleState.None)
+        ]
+      );
+
+    } else {
+      // There is no workspace or folder open
+      return Promise.resolve([
+        new ItemMessage(Messages.warning.noWorkspace, { messageType: 'none' }, TreeItemCollapsibleState.None,
+        {
+          command: 'vscode.openFolder',
+          tooltip: '',
+          title: 'Open'
+        })
+      ]);
+    }
+
+  }
+
+  validateConfig() {
+    const taskListSettings = this.pmSettings.get('taskList');
+
+    let isConfigured;
+    if (
+        !Array.isArray(taskListSettings) ||
+        (Array.isArray(taskListSettings) &&
+          (taskListSettings.length === 0 || taskListSettings[0].projectId === "")
+        )
+      ) {
+      // There is no Project configured or not in the correct way
       window.showWarningMessage(Messages.warning.noSettings);
-
-      return Promise.resolve([new ItemMessage(Messages.warning.noSettings, { messageType: 'urgent' }, TreeItemCollapsibleState.None, {
-        title: "config",
-        command: "PMTaskList.configure",
-        tooltip: "string"
-      })]);
-		}
-
-    return Promise.resolve(
-      [
-        new Task('Task 1', {date: 'date', who: 'who'}, TreeItemCollapsibleState.None),
-        new Task('Task 1', {date: 'date', who: 'who'}, TreeItemCollapsibleState.None),
-        new Task("--Task 1--", {date: 'date', who: 'who'}, TreeItemCollapsibleState.None),
-        new Task("~~Task final~~", {date: 'date', who: 'who'}, TreeItemCollapsibleState.None)
-      ]
-    );
-
-		// if (element) {
-    //   if (element.hasChildrens) {
-    //     return Promise.resolve([new Task('Title', 'date', 'who', TreeItemCollapsibleState.Collapsed)]);
-    //   } else {
-    //     return Promise.resolve([new Task('Title Uncollapsed', 'date', 'who', TreeItemCollapsibleState.None)]);
-    //   }
-		// } else {
-    //   window.showInformationMessage('No element');
-    //   return Promise.resolve([new Task('Title Uncollapsed', 'date', 'who', TreeItemCollapsibleState.None)]);
-		// }
-
-	}
+      isConfigured = false;
+    } else {
+      isConfigured = true;
+    }
+    commands.executeCommand('setContext', 'isProjectConfigured', isConfigured);
+    return isConfigured;
+  }
 
 }
 
@@ -93,11 +129,6 @@ export class Task extends TreeItem {
 		return `${this.data.date ? this.data.date : ''}`;
   }
 
-  // iconPath = {
-  //   light: path.join(__filename, '..', '..', 'resources', 'light', (this.data.messageType ? this.data.messageType : 'date'), '.svg'),
-  //   dark: path.join(__filename, '..', '..', 'resources', 'dark', (this.data.messageType ? this.data.messageType : 'date'), '.svg')
-  // };
-
   iconPath = {
     light: path.join(__filename, '..', '..', '..', 'resources', 'light', 'dot.svg'),
     dark: path.join(__filename, '..', '..', '..', 'resources', 'dark', 'dot.svg')
@@ -109,7 +140,7 @@ export class Task extends TreeItem {
 export class ItemMessage extends Task {
 
 	get tooltip(): string {
-    return `${this.title}`;
+    return `${this.command ? this.command.tooltip : this.title}`;
 	}
 
 	get description(): string {
