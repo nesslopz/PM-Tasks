@@ -116,21 +116,6 @@ export class TaskListProvider implements TreeDataProvider<Task> {
       managerList.map(manager => {
         this.providers.push(new Provider(manager));
       });
-      // Remove duplicated values from config
-      // let newSettings = taskListSettings.map(project => {
-      //   return taskListSettings.reduce((prev, next) => (prev.projectManager || '') != next {
-      //     projectManager: project.projectManager,
-      //     projectId: project.projectId
-      //   };
-      // });
-      // console.log(newSettings);
-      // // [
-      // //   ...taskListSettings,
-      // //   {
-      // //   projectId: projectId,
-      // //   projectManager: pmProvider.id
-      // // }];
-      // await pmSettings.update('taskList', newSettings, workspaceFolder ? ConfigurationTarget.WorkspaceFolder : ConfigurationTarget.Workspace);
       isConfigured = true;
     }
     commands.executeCommand('setContext', 'isProjectConfigured', isConfigured);

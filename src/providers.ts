@@ -83,8 +83,8 @@ export class Provider {
    * @param provider ID of provider
    * @return value | false
    */
-  async getToken (provider:string|undefined) {
-    return await workspace.getConfiguration('pm').get(`${provider ? provider: this.manager.id}Token`, false);
+  async getToken (provider?:string) {
+    return await workspace.getConfiguration('pm').get(`${provider ? provider : this.manager.id}Token`, false);
   }
 
   /**
@@ -93,8 +93,10 @@ export class Provider {
    * @param token token for provider
    * @return boolean
    */
-  async setToken (provider:string, token:string) {
-    return await workspace.getConfiguration('pm').update(`${provider}Token`, token, ConfigurationTarget.Global);
+  async setToken (token:string) {
+    if (this.manager.id) {
+      return await workspace.getConfiguration('pm').update(`${this.manager.id}Token`, token, ConfigurationTarget.Global);
+    }
   }
 
   /**
