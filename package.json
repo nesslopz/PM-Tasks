@@ -23,7 +23,8 @@
   "activationEvents": [
     "onView:PMTaskList",
     "onCommand:PMTaskList.addTask",
-    "onCommand:PMTaskList.configure"
+    "onCommand:PMTaskList.configure",
+    "workspaceContains:./.vscode/settings.json"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -55,6 +56,15 @@
           "command": "PMTaskList.addTask",
           "group": "navigation",
           "when": "view == PMTaskList && isProjectConfigured"
+        },
+        {
+          "command": "PMTaskList.configure",
+          "when": "view == PMTaskList && isProjectConfigured"
+        },
+        {
+          "command": "PMTaskList.refresh",
+          "group": "navigation",
+          "when": "view == PMTaskList && isProjectConfigured && !config.pm.autoSync"
         }
       ],
       "view/item/context": [
@@ -93,8 +103,17 @@
         }
       },
       {
+        "command": "PMTaskList.refresh",
+        "title": "Refresh",
+        "category": "PM Tasks",
+        "icon": {
+          "dark": "resources/dark/sync.svg",
+          "light": "resources/light/sync.svg"
+        }
+      },
+      {
         "command": "PMTask.completeTask",
-        "title": "Mark as completed",
+        "title": "Mark task as completed",
         "category": "PM Tasks",
         "icon": {
           "dark": "resources/dark/complete.svg",
@@ -103,7 +122,7 @@
       },
       {
         "command": "PMTask.editTask",
-        "title": "Edit",
+        "title": "Edit task",
         "category": "PM Tasks",
         "icon": {
           "dark": "resources/dark/edit.svg",
@@ -112,7 +131,7 @@
       },
       {
         "command": "PMTask.deleteTask",
-        "title": "Delete",
+        "title": "Delete task",
         "category": "PM Tasks"
       }
     ],

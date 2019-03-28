@@ -20,14 +20,14 @@ export class TaskListProvider implements TreeDataProvider<Task> {
 
 	private _onDidChangeTreeData: EventEmitter<Task | undefined> = new EventEmitter<Task | undefined>();
 	readonly onDidChangeTreeData: Event<Task | undefined> = this._onDidChangeTreeData.event;
-  public providers:any = [];
+  public providers:Provider[] = [];
 
 	constructor(private pmSettings: WorkspaceConfiguration) {
     workspace.onDidChangeConfiguration(changed => {
       // let initialSettings = this.pmSettings;
       if (changed.affectsConfiguration('pm')) {
         this.pmSettings = workspace.getConfiguration('pm');
-        this.validateConfig()
+        this.validateConfig();
         this.refresh();
       }
     });
@@ -60,13 +60,18 @@ export class TaskListProvider implements TreeDataProvider<Task> {
       }
 
       // const tasks = [...this.providers.map(provider => provider.getTasks())]
-      let tasks:any = [];
+      let tasks:any[] = [];
 
-      if (tasks) {
+      if (tasks.length > 0) {
        /**
        * Return tasks
        */
-        return Promise.resolve(tasks);
+        return Promise.resolve(tasks.map((task:TaskItem) => new Task(task.title, task.data, TreeItemCollapsibleState.Collapsed, {
+          title: 'View details',
+          command: 'PMTask.viewTask',
+          tooltip: 'View details',
+          arguments: [task.title]
+        })));
       } else {
         /**
          * Return message of empty tasks
@@ -174,8 +179,14 @@ export class ItemMessage extends Task {
 }
 
 
-interface TaskData {
+export interface TaskData {
   date?: any;
   who?: string;
   messageType?: string;
+}
+
+export interface TaskItem {
+  id: string,
+  title: string,
+  data: TaskData
 }

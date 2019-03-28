@@ -11,7 +11,7 @@ export function tasksCommands(context: ExtensionContext) {
   /**
    * Tasks Commands
    */
-  let getTasks = commands.registerCommand('PMTaskList.getTasks', () => window.showInformationMessage('Get All Tasks!'));
+  let refreshTasks = commands.registerCommand('PMTaskList.refresh', () => window.showInformationMessage('Get All Tasks!'));
   let addTask = commands.registerCommand('PMTaskList.addTask', () => window.showInformationMessage('Create a Task!'));
   let editTask = commands.registerCommand('PMTask.editTask', task => window.showWarningMessage(`Edit ${task.label}`))
   let deleteTask = commands.registerCommand('PMTask.deleteTask', task => window.showErrorMessage(`Delete ${task.label}`))
@@ -101,7 +101,7 @@ export function tasksCommands(context: ExtensionContext) {
   });
 
   context.subscriptions.push(configurePM);
-  context.subscriptions.push(getTasks);
+  context.subscriptions.push(refreshTasks);
   context.subscriptions.push(addTask);
   context.subscriptions.push(editTask);
   context.subscriptions.push(deleteTask);

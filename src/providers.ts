@@ -1,7 +1,7 @@
 import { workspace, WorkspaceConfiguration, ConfigurationTarget } from 'vscode';
-import { Task } from './tasks/taskList';
+import { TaskItem } from './tasks/taskList';
 
-export const providerList = [
+export const providerList:ProviderItem[] = [
   {
     id: "teamwork",
     label: "Teamwork",
@@ -26,11 +26,23 @@ export const providerList = [
         tasklist: "/tasklists/{id}/tasks.json",
         subtasks: "/tasks/{parentTaskId}/subtasks.json",
       },
-      actions: {
-        complete: "/tasks/{id}/complete.json",
-        uncomplete: "/tasks/{id}/uncomplete.json",
-        update: "/tasks/{id}.json",
-        delete: "/tasks/{id}.json"
+    },
+    actions: {
+      complete: {
+        url: "/tasks/{id}/complete.json",
+        method: "GET"
+      },
+      uncomplete: {
+        url: "/tasks/{id}/uncomplete.json",
+        method: "GET"
+      },
+      update: {
+        url: "/tasks/{id}.json",
+        method: "GET"
+      },
+      delete: {
+        url: "/tasks/{id}.json",
+        method: "GET"
       }
     },
     messages: {
@@ -42,11 +54,12 @@ export const providerList = [
 
 export class Provider {
   private user:any;
-  private pmSettings:WorkspaceConfiguration = workspace.getConfiguration('pm');
-  public manager: any;
+  private pmSettings:WorkspaceConfiguration;
+  public manager:ProviderItem|any;
 
   constructor(public id?:string) {
     this.manager = providerList.reduce((others, provider) => (provider.id || '') === this.id ? provider : {}, {})
+    this.pmSettings = workspace.getConfiguration('pm');
     workspace.onDidChangeConfiguration(changed => {
       if (changed.affectsConfiguration('pm')) {
         this.pmSettings = workspace.getConfiguration('pm');
@@ -62,8 +75,15 @@ export class Provider {
       this.user = await this.getUser();
 
     return await [
-      new Task('taskName', {date: '20190818', who: 'somebody'}, 0)
-    ];
+      {
+        id: '123',
+        title: 'Nueva tarea',
+        data: {
+          who: 'néstor',
+          date: 'tomorrow'
+        }
+      }
+    ]);
   }
 
   /**
@@ -108,5 +128,51 @@ export class Provider {
     return this.manager.messages ? this.manager.messages[key] : '';
   }
 }
+
+interface ProviderItem {
+  id: string,
+  label: string,
+  description?: string,
+  url?: string,
+  response: string,
+  routes: {
+    auth: string
+    projects: {
+      all: string,
+      single: string
+    },
+    tasklists: {
+      all: string,
+      single: string,
+      project: string,
+    },
+    tasks: {
+      all: string,
+      single: string,
+      project: string,
+      tasklist: string,
+      subtasks: string
+    }
+  },
+  actions: {
+    complete: {
+      url: string,
+      method: string
+    },
+    uncomplete: {
+      url: string,
+      method: string
+    },
+    update: {
+      url: string,
+      method: string
+    },
+    delete: {
+      url: string,
+      method: string
+    }
+  },
+  messages: any
+};
 
 export default providerList;
