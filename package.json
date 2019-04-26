@@ -98,8 +98,8 @@
         "title": "Configure Project",
         "category": "PM Tasks",
         "icon": {
-          "dark": "resources/dark/config.svg",
-          "light": "resources/light/config.svg"
+          "dark": "resources/dark/configure.svg",
+          "light": "resources/light/configure.svg"
         }
       },
       {
@@ -119,6 +119,11 @@
           "dark": "resources/dark/complete.svg",
           "light": "resources/light/complete.svg"
         }
+      },
+      {
+        "command": "PMTask.viewTask",
+        "title": "View task details",
+        "category": "PM Tasks"
       },
       {
         "command": "PMTask.editTask",
