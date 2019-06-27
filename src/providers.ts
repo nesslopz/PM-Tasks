@@ -1,140 +1,227 @@
-import { workspace, WorkspaceConfiguration, ConfigurationTarget } from 'vscode';
-import { TaskItem } from './tasks/taskList';
+import { workspace, WorkspaceConfiguration, ConfigurationTarget, Uri, commands, window, QuickPickItem } from 'vscode';
+import { xhr } from 'request-light';
 
-export const providerList:ProviderItem[] = [
-  {
-    id: "teamwork",
-    label: "Teamwork",
-    description: "teamwork.com | Working together. Beautifully",
-    url: "",
-    response: "json",
-    routes: {
-      auth: "https://api.teamwork.com/authenticate.json",
-      projects: {
-        all: "/projects.json",
-        single: "/projects/{id}.json",
-      },
-      tasklists: {
-        all: "/tasklists.json",
-        single: "/tasklists/{id}.json",
-        project: "/projects/{id}/tasklists.json",
-      },
-      tasks: {
-        all: "/tasks.json",
-        single: "/tasks/{id}.json",
-        project: "/projects/{id}/tasks.json",
-        tasklist: "/tasklists/{id}/tasks.json",
-        subtasks: "/tasks/{parentTaskId}/subtasks.json",
-      },
-    },
-    actions: {
-      complete: {
-        url: "/tasks/{id}/complete.json",
-        method: "GET"
-      },
-      uncomplete: {
-        url: "/tasks/{id}/uncomplete.json",
-        method: "GET"
-      },
-      update: {
-        url: "/tasks/{id}.json",
-        method: "GET"
-      },
-      delete: {
-        url: "/tasks/{id}.json",
-        method: "GET"
-      }
-    },
-    messages: {
-      getToken: "https://support.teamwork.com/projects/using-teamwork-projects/locating-your-api-key",
-      openProject: "openProject"
-    }
-  }
-];
+import Task from './tasks/tasks';
+import { queryParams } from './utilities';
 
-export class Provider {
-  private user:any;
+
+/**
+ * Taskslist provider
+ */
+export default class Provider {
   private pmSettings:WorkspaceConfiguration;
-  public manager:ProviderItem|any;
 
-  constructor(public id?:string) {
-    this.manager = providerList.reduce((others, provider) => (provider.id || '') === this.id ? provider : {}, {})
-    this.pmSettings = workspace.getConfiguration('pm');
+  public id           ?: string|number;
+  public responseType ?: string;
+  public routes       ?: Manager["routes"]|any;
+  public endpoints    ?: Manager['endpoints']|any;
+  public helpers      ?: Manager['helpers']|any;
+  public messages     ?: Manager['messages']|any;
+
+  public projects : string[];
+
+  private _user ?: any;
+  private defaultURL : string = "";
+
+  constructor(manager:Manager) {
+    this.pmSettings = workspace.getConfiguration('pm', null);
+
+    Object.assign(this, manager);
+
+    this.projects = this.pmSettings.get('taskList', [])
+      // Get only project ID of this Provider
+      .filter((tasklist:any) => tasklist.projectManager == this.id)
+      // Get the array of Project ID's
+      .reduce( (current:string[], tasklist:any) => {
+        if (Array.isArray(tasklist.projectId))
+          return [...tasklist.projectId]
+        else
+          return [tasklist.projectId];
+      }, []);
+
     workspace.onDidChangeConfiguration(changed => {
-      if (changed.affectsConfiguration('pm')) {
-        this.pmSettings = workspace.getConfiguration('pm');
+      if (changed.affectsConfiguration('pm.taskList')) {
+        this.pmSettings = workspace.getConfiguration('pm', null);
+        // Get Projects
+        this.projects = this.pmSettings.get('taskList', [])
+        // Get only project ID of this Provider
+        .filter( (tasklist:any) => tasklist.projectManager == this.id )
+        // Get the array of Project ID's
+        .reduce( (current:string[], tasklist:any) => {
+          if (Array.isArray(tasklist.projectId))
+            return [...tasklist.projectId]
+          else
+            return [tasklist.projectId];
+        }, []) ;
       }
     });
   }
 
   /**
-   * Get list of tasks
+   * @returns Provider.user
    */
-  async getTasks() {
-    if (!this.user)
-      this.user = await this.getUser();
-
-    return await [
-      {
-        id: '123',
-        title: 'Nueva tarea',
-        data: {
-          who: 'néstor',
-          date: 'tomorrow'
-        }
-      }
-    ]);
+  get user() {
+    return this._user;
   }
 
   /**
-   * @return Provider.user
+   * User data
    */
-  async getUser() {
-    // User exists
-    if (this.user) return this.user;
-    // Check if manager has been defined
-    if (!this.manager.id) {
-      return;
-    }
+  set user(user) {
+    this._user = user;
   }
+
+  /**
+   * @returns Provider.url
+   */
+  get url():string {
+    return this.defaultURL;
+  }
+
+  /**
+   * Url for fetch
+   */
+  set url(url:string) {
+    this.defaultURL = url;
+  }
+
+  /**
+   * Get list of Projects
+   * @returns array
+   */
+  public async getProjects():Promise<ProjectItem[]> {
+    return [];
+  }
+
+  /**
+   * Get list of Tasks
+   * @returns array
+   */
+  public async getTasks(task?:Task):Promise<Task[]> {
+    return [];
+  }
+
 
   /**
    *
    * @param provider ID of provider
-   * @return value | false
+   * @returns value || ''
    */
-  async getToken (provider?:string) {
-    return await workspace.getConfiguration('pm').get(`${provider ? provider : this.manager.id}Token`, false);
+  async getToken (provider?:string):Promise<string> {
+    let token = await workspace.getConfiguration('pm', null).get(`${provider ? provider : this.id}Token`, '');
+
+    // Request token if not exists
+    if (!token)
+      token = await this.updateToken();
+
+    return token;
   }
 
   /**
    *
    * @param provider ID of provider
    * @param token token for provider
-   * @return boolean
+   * @returns boolean
    */
-  async setToken (token:string) {
-    if (this.manager.id) {
-      return await workspace.getConfiguration('pm').update(`${this.manager.id}Token`, token, ConfigurationTarget.Global);
-    }
+  async setToken (token:string):Promise<void> {
+    if (!this.id)
+      return;
+
+    return await workspace.getConfiguration('pm', null).update(`${this.id}Token`, token, ConfigurationTarget.Global);
+  }
+
+  async updateToken():Promise<string> {
+
+    // Show help for get token from provider
+    await commands.executeCommand('vscode.open', Uri.parse(this.helpers.getToken));
+
+    // Read token
+    let newToken = await window.showInputBox({
+      ignoreFocusOut: true,
+      prompt: await this.getMessage('insertToken')
+    });
+
+    // Return empty
+    if (!newToken)
+      return '';
+
+    // Update in configuration
+    await this.setToken(newToken);
+    // Return newToken inserted
+    return newToken;
+
   }
 
   /**
-   *
-   * @param key key for message
-   * @return value
+   * HTTP requests wrapper
+   * @param url URL to request
+   * @param options XHROptions
    */
-  getMessage(key:string): string {
-    return this.manager.messages ? this.manager.messages[key] : '';
+  async fetch(
+    url:string,
+    {
+      method = "GET",
+      user,
+      password,
+      base   = this.url,
+      useSSL = false,
+      params = {}
+    } :
+    {
+      method   ?: string,
+      user     ?: string,
+      password ?: string,
+      base     ?: string,
+      useSSL   ?: boolean,
+      params   ?: any
+    } = {}
+    ) {
+    const response = await xhr({
+      type        : method,
+      url         : Uri.parse( base + url ).toString() + queryParams(params),
+      user        : user || this.user.username,
+      password    : password || this.user.password,
+      strictSSL   : useSSL,
+      responseType: this.responseType
+    })
+    .then(res => JSON.parse(res.responseText))
+    .catch(_ => null);
+
+    if (!response)
+      return false;
+
+    if (
+        response.STATUS == "OK" ||
+        response.STATUS == "ok" ||
+        response.STATUS == "Ok" ||
+        response.status == "OK" ||
+        response.status == "ok" ||
+        response.status == "Ok"
+      ) {
+        // Get Keys from received object
+        let keys = Object.keys(response)
+                          // Remove key "STATUS"
+                         .filter(key => key !== ("STATUS" || "status"));
+        if (keys.length > 1) {
+          let responseObj:any = {};
+          keys.map(key => responseObj[key] = response[key]);
+          return responseObj;
+        } else {
+          return response[keys[0]];
+        }
+      } else {
+        return false;
+      }
   }
+
 }
 
-interface ProviderItem {
+interface Manager {
   id: string,
   label: string,
   description?: string,
-  url?: string,
-  response: string,
+  defaultURL?: string,
+  responseType: string,
   routes: {
     auth: string
     projects: {
@@ -154,7 +241,7 @@ interface ProviderItem {
       subtasks: string
     }
   },
-  actions: {
+  endpoints: {
     complete: {
       url: string,
       method: string
@@ -172,7 +259,15 @@ interface ProviderItem {
       method: string
     }
   },
-  messages: any
-};
+  helpers: any,
+  messages: {
+    success ?: any,
+    warning ?: any;
+    error   ?: any;
+    actions ?: any;
+  }
+}
 
-export default providerList;
+interface ProjectItem extends QuickPickItem {
+  id: string,
+}

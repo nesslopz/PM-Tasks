@@ -1,0 +1,63 @@
+[
+  {
+    "id": "teamwork",
+    "label": "Teamwork",
+    "description": "teamwork.com | Working together. Beautifully",
+    "defaultURL": "",
+    "responseType": "json",
+    "routes": {
+      "auth": "https://api.teamwork.com/authenticate.json",
+      "projects": {
+        "all": "/projects.json",
+        "single": "/projects/{id}.json"
+      },
+      "tasklists": {
+        "all": "/tasklists.json",
+        "single": "/tasklists/{id}.json",
+        "project": "/projects/{id}/tasklists.json"
+      },
+      "tasks": {
+        "all": "/tasks.json",
+        "single": "/tasks/{id}.json",
+        "project": "/projects/{id}/tasks.json",
+        "tasklist": "/tasklists/{id}/tasks.json",
+        "subtasks": "/tasks/{id}/subtasks.json"
+      }
+    },
+    "endpoints": {
+      "complete": {
+        "url": "/tasks/{id}/complete.json",
+        "method": "GET"
+      },
+      "uncomplete": {
+        "url": "/tasks/{id}/uncomplete.json",
+        "method": "GET"
+      },
+      "update": {
+        "url": "/tasks/{id}.json",
+        "method": "GET"
+      },
+      "delete": {
+        "url": "/tasks/{id}.json",
+        "method": "GET"
+      }
+    },
+    "messages": {
+      "success": {},
+      "warning": {
+        "register": "There's an problem trying to connect to Teamwork, check your token"
+      },
+      "error": {
+
+      },
+      "actions": {
+        "updateToken": "Update Token"
+      }
+    },
+    "helpers": {
+      "getToken": "https://support.teamwork.com/projects/using-teamwork-projects/locating-your-api-key",
+      "unassigned": "Anyone",
+      "self": "You"
+    }
+  }
+]

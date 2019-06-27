@@ -1,14 +1,14 @@
 {
   "name": "pm-tasks",
   "displayName": "PM Tasks",
-  "description": "Project Manager tasks integrated in VSCode",
+  "description": "Project Manager tasks integration with VSCode",
   "publisher": "nesslopz",
   "version": "0.0.1",
   "license": "ISC",
   "preview": true,
   "icon": "resources/icon.png",
   "engines": {
-    "vscode": "^1.31.0"
+    "vscode": "^1.35.0"
   },
   "categories": [
     "Other"
@@ -23,7 +23,7 @@
   "activationEvents": [
     "onView:PMTaskList",
     "onCommand:PMTaskList.addTask",
-    "onCommand:PMTaskList.configure",
+    "onCommand:PMTaskList.config",
     "workspaceContains:./.vscode/settings.json"
   ],
   "main": "./out/extension.js",
@@ -48,7 +48,7 @@
     "menus": {
       "view/title": [
         {
-          "command": "PMTaskList.configure",
+          "command": "PMTaskList.config",
           "group": "navigation",
           "when": "view == PMTaskList && !isProjectConfigured"
         },
@@ -58,11 +58,11 @@
           "when": "view == PMTaskList && isProjectConfigured"
         },
         {
-          "command": "PMTaskList.configure",
+          "command": "PMTaskList.addProject",
           "when": "view == PMTaskList && isProjectConfigured"
         },
         {
-          "command": "PMTaskList.refresh",
+          "command": "PMTaskList.refreshTasklist",
           "group": "navigation",
           "when": "view == PMTaskList && isProjectConfigured && !config.pm.autoSync"
         }
@@ -74,19 +74,21 @@
           "group": "inline"
         },
         {
-          "command": "PMTask.deleteTask",
-          "when": "view == PMTaskList && viewItem == task"
+          "command": "PMTask.editTask",
+          "when": "view == PMTaskList && viewItem == task",
+          "group": "1_modification"
         },
         {
-          "command": "PMTask.editTask",
-          "when": "view == PMTaskList && viewItem == task"
+          "command": "PMTask.deleteTask",
+          "when": "view == PMTaskList && viewItem == task",
+          "group": "z_commands"
         }
       ]
     },
     "commands": [
       {
         "command": "PMTaskList.addTask",
-        "title": "New",
+        "title": "New Task",
         "category": "PM Tasks",
         "icon": {
           "dark": "resources/dark/add.svg",
@@ -94,7 +96,7 @@
         }
       },
       {
-        "command": "PMTaskList.configure",
+        "command": "PMTaskList.config",
         "title": "Configure Project",
         "category": "PM Tasks",
         "icon": {
@@ -103,8 +105,17 @@
         }
       },
       {
-        "command": "PMTaskList.refresh",
-        "title": "Refresh",
+        "command": "PMTaskList.addProject",
+        "title": "Add Project",
+        "category": "PM Tasks",
+        "icon": {
+          "dark": "resources/dark/configure.svg",
+          "light": "resources/light/configure.svg"
+        }
+      },
+      {
+        "command": "PMTaskList.refreshTasklist",
+        "title": "Refresh Tasklist",
         "category": "PM Tasks",
         "icon": {
           "dark": "resources/dark/sync.svg",
@@ -113,7 +124,7 @@
       },
       {
         "command": "PMTask.completeTask",
-        "title": "Mark task as completed",
+        "title": "Mark as completed",
         "category": "PM Tasks",
         "icon": {
           "dark": "resources/dark/complete.svg",
@@ -122,12 +133,12 @@
       },
       {
         "command": "PMTask.viewTask",
-        "title": "View task details",
+        "title": "View details",
         "category": "PM Tasks"
       },
       {
         "command": "PMTask.editTask",
-        "title": "Edit task",
+        "title": "Edit",
         "category": "PM Tasks",
         "icon": {
           "dark": "resources/dark/edit.svg",
@@ -136,8 +147,12 @@
       },
       {
         "command": "PMTask.deleteTask",
-        "title": "Delete task",
-        "category": "PM Tasks"
+        "title": "Delete",
+        "category": "PM Tasks",
+        "icon": {
+          "dark": "resources/dark/dot.svg",
+          "light": "resources/light/dot.svg"
+        }
       }
     ],
     "configuration": {
@@ -146,10 +161,14 @@
       "properties": {
         "pm.taskList": {
           "type": "array",
+          "scope": "resource",
           "default": [],
           "items": {
             "type": "object",
-            "required": ["projectManager", "projectId"],
+            "required": [
+              "projectManager",
+              "projectId"
+            ],
             "properties": {
               "projectManager": {
                 "type": "string",
@@ -159,7 +178,10 @@
                 ]
               },
               "projectId": {
-                "type": ["string", "array"],
+                "type": [
+                  "string",
+                  "array"
+                ],
                 "markdownDescription": "Id of Project with Tasks for this project, _optional:_ `array` with ID's"
               }
             }
@@ -175,6 +197,11 @@
           "type": "boolean",
           "default": true,
           "description": "Auto Sync tasks"
+        },
+        "pm.groupTasksByProject": {
+          "type": "boolean",
+          "default": "false",
+          "description": "Group tasks in Project tree"
         }
       }
     }
@@ -188,10 +215,17 @@
   },
   "devDependencies": {
     "@types/mocha": "^2.2.42",
+    "@types/moment": "^2.13.0",
     "@types/node": "^10.14.1",
+    "eslint": "^5.16.0",
+    "eslint-config-standard": "^12.0.0",
+    "eslint-plugin-import": "^2.17.2",
+    "eslint-plugin-node": "^9.0.1",
+    "eslint-plugin-promise": "^4.1.1",
+    "eslint-plugin-standard": "^4.0.0",
     "tslint": "^5.14.0",
     "typescript": "^3.3.4000",
-    "vscode": "^1.1.32"
+    "vscode": "^1.1.34"
   },
   "bugs": {
     "url": "https://github.com/nesslopz/PM-Tasks/issues",
@@ -203,6 +237,8 @@
   },
   "homepage": "https://github.com/nesslopz/PM-Tasks/blob/master/README.md",
   "dependencies": {
+    "moment": "^2.24.0",
+    "node-fetch": "^2.5.0",
     "request-light": "^0.2.4"
   }
 }

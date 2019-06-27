@@ -1,0 +1,19 @@
+{
+  "success": {
+
+  },
+  "warning": {
+    "noSettings": "No PM configured in this workspace",
+    "noWorkspace": "Open a Folder or Workspace."
+  },
+  "error": {
+  },
+  "helpers": {
+    "configure": "Configure a Project Manager",
+    "insertProjectId": "Project ID",
+    "insertToken": "Token for this Project Manager",
+    "noTasks": "0 Tasks",
+    "emptyTasks": "There is not tasks in this project / tasklist. Check your configuration",
+    "selectPm": "Select the Project Managment software for this project"
+  }
+}
