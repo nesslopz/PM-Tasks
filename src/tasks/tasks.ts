@@ -61,17 +61,17 @@ export default class Task extends TreeItem {
 
     switch (this.item.type) {
       case 'urgent':
-        icon = 'circle-red';
+        icon = 'issues';
         break;
       case 'important':
-        icon = 'dot-yellow'
+        icon = 'warning'
         break;
       case 'prohibited':
-        icon = 'status-error'
+        icon = 'error'
         break;
       case 'normal':
       default:
-        icon = 'dot';
+        icon = 'circle-outline';
         break;
     }
     return icon;
@@ -90,7 +90,7 @@ export class ItemMessage extends Task {
 
   constructor(
     public readonly title  : string,
-    public readonly type   ?: string,
+    public readonly type   ?: "error"|"warning"|"info",
     public readonly command?: Command
   )
   {
@@ -101,13 +101,14 @@ export class ItemMessage extends Task {
     let icon;
     switch (this.type) {
       case 'error':
-        icon = 'status-error';
+        icon = 'error';
         break;
       case 'warning':
-        icon = 'status-warning'
+        icon = 'warning'
         break;
+      case 'info':
       default:
-        icon = 'status-info';
+        icon = 'info';
         break;
     }
     return icon;

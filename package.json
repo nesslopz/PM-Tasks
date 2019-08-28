@@ -100,8 +100,8 @@
         "title": "Configure Project",
         "category": "PM Tasks",
         "icon": {
-          "dark": "resources/dark/configure.svg",
-          "light": "resources/light/configure.svg"
+          "dark": "resources/dark/settings.svg",
+          "light": "resources/light/settings.svg"
         }
       },
       {
@@ -109,8 +109,8 @@
         "title": "Add Project",
         "category": "PM Tasks",
         "icon": {
-          "dark": "resources/dark/configure.svg",
-          "light": "resources/light/configure.svg"
+          "dark": "resources/dark/settings.svg",
+          "light": "resources/light/settings.svg"
         }
       },
       {
@@ -118,8 +118,8 @@
         "title": "Refresh Tasklist",
         "category": "PM Tasks",
         "icon": {
-          "dark": "resources/dark/sync.svg",
-          "light": "resources/light/sync.svg"
+          "dark": "resources/dark/refresh.svg",
+          "light": "resources/light/refresh.svg"
         }
       },
       {
@@ -127,8 +127,8 @@
         "title": "Mark as completed",
         "category": "PM Tasks",
         "icon": {
-          "dark": "resources/dark/complete.svg",
-          "light": "resources/light/complete.svg"
+          "dark": "resources/dark/check.svg",
+          "light": "resources/light/check.svg"
         }
       },
       {
@@ -216,16 +216,17 @@
   "devDependencies": {
     "@types/mocha": "^2.2.42",
     "@types/moment": "^2.13.0",
-    "@types/node": "^10.14.1",
+    "@types/node": "^10.14.16",
+    "@types/showdown": "^1.9.3",
     "eslint": "^5.16.0",
     "eslint-config-standard": "^12.0.0",
-    "eslint-plugin-import": "^2.17.2",
+    "eslint-plugin-import": "^2.18.2",
     "eslint-plugin-node": "^9.0.1",
-    "eslint-plugin-promise": "^4.1.1",
-    "eslint-plugin-standard": "^4.0.0",
-    "tslint": "^5.14.0",
-    "typescript": "^3.3.4000",
-    "vscode": "^1.1.34"
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.1",
+    "tslint": "^5.19.0",
+    "typescript": "^3.6.2",
+    "vscode": "^1.1.36"
   },
   "bugs": {
     "url": "https://github.com/nesslopz/PM-Tasks/issues",
@@ -238,7 +239,7 @@
   "homepage": "https://github.com/nesslopz/PM-Tasks/blob/master/README.md",
   "dependencies": {
     "moment": "^2.24.0",
-    "node-fetch": "^2.5.0",
-    "request-light": "^0.2.4"
+    "request-light": "^0.2.4",
+    "showdown": "^1.9.0"
   }
 }
