@@ -1,11 +1,12 @@
 import {
   Command,
   TreeItem,
-  TreeItemCollapsibleState
+  TreeItemCollapsibleState,
 } from 'vscode';
 
 import * as path from 'path';
 import * as moment from 'moment';
+import Provider, { ProjectItem } from '../providers';
 
 export default class Task extends TreeItem {
 
@@ -20,28 +21,26 @@ export default class Task extends TreeItem {
     }
     if (this.item.hasChildren) {
       this.collapsibleState = TreeItemCollapsibleState.Collapsed;
+      this.contextValue = 'parentTask';
     } else {
       this.collapsibleState = TreeItemCollapsibleState.None;
+      this.command = {
+        title: 'View Task Details',
+        command: 'PMTask.viewTask',
+        arguments: [this]
+      };
     }
-    this.command = {
-      title: 'View Task Details',
-      command: 'PMTask.viewTask',
-      arguments: [this]
-    };
+
     /**
      * Task Data
      */
     this.data = this.item.data;
   }
 
-	get tooltip(): string {
-    let { date, who } = this.item;
-
-    return `${date ? `[${moment(date).format('DD/MM/YY')}]` : ''} ${who}`;
-  }
-
-
-	get description(): string {
+  /**
+   * Formatted date to human-readable string
+   */
+  private get date(): string {
     let { date } = this.item;
     if (date) {
       date = moment(date).calendar(moment.now(), {
@@ -49,11 +48,26 @@ export default class Task extends TreeItem {
         nextDay : '[Tomorrow]',
         lastDay : '[Yesterday]',
         nextWeek: 'dddd',
-        lastWeek: `❗️[${moment(date).fromNow()}]`,
+        lastWeek: `[❗${moment(date).fromNow()}]`,
         sameElse: 'DD/MM/YY'
       });
+      return date;
     }
-		return `${date}`;
+    return '';
+  }
+
+	get tooltip(): string {
+    let { who } = this.item;
+
+    /**
+     * Task title
+     * [date] assigned
+     */
+    return `${this.item.title}\n${this.date !== '' ? `[${this.date}] ` : ''}${who}`;
+  }
+
+	get description(): string {
+		return this.date;
   }
 
   get icon(): string {
@@ -77,6 +91,17 @@ export default class Task extends TreeItem {
     return icon;
   }
 
+  /**
+   * Mark this task as completed
+   * >Use **Provider** to edit this action
+   */
+  async complete() {
+    if (this.item.provider) {
+      return await this.item.provider.completeTask(this.id);
+    }
+  }
+
+  // Show icon or arrow only if hasChildren
   iconPath = !this.item.hasChildren ? {
     light: path.join(__filename, '..', '..', '..', 'resources', 'light', `${this.icon}.svg`),
     dark: path.join(__filename, '..', '..', '..', 'resources', 'dark', `${this.icon}.svg`)
@@ -108,7 +133,7 @@ export class ItemMessage extends Task {
         break;
       case 'info':
       default:
-        icon = 'info';
+        icon = 'issues';
         break;
     }
     return icon;
@@ -127,6 +152,7 @@ export class ItemMessage extends Task {
 
 export interface TaskItem {
   title        : string,
+  provider    ?: Provider,
   id          ?: string,
   date        ?: string|number|Date;
   who         ?: string;
@@ -139,8 +165,9 @@ interface TaskData {
   start         ?: string|number|Date;
   end           ?: string|number|Date;
   people        ?: TaskUser[]|string;
-  project       ?: string|number;
+  project       ?: ProjectItem|string|number;
   progress      ?: string|number;
+  description   ?: string;
   estimatedTime ?: string|number;
   comments      ?: string|number;
   private       ?: boolean;

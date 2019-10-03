@@ -74,14 +74,9 @@
           "group": "inline"
         },
         {
-          "command": "PMTask.editTask",
-          "when": "view == PMTaskList && viewItem == task",
-          "group": "1_modification"
-        },
-        {
-          "command": "PMTask.deleteTask",
-          "when": "view == PMTaskList && viewItem == task",
-          "group": "z_commands"
+          "command": "PMTask.viewTask",
+          "when": "view == PMTaskList && viewItem == parentTask",
+          "group": "inline"
         }
       ]
     },
@@ -134,24 +129,10 @@
       {
         "command": "PMTask.viewTask",
         "title": "View details",
-        "category": "PM Tasks"
-      },
-      {
-        "command": "PMTask.editTask",
-        "title": "Edit",
         "category": "PM Tasks",
         "icon": {
-          "dark": "resources/dark/edit.svg",
-          "light": "resources/light/edit.svg"
-        }
-      },
-      {
-        "command": "PMTask.deleteTask",
-        "title": "Delete",
-        "category": "PM Tasks",
-        "icon": {
-          "dark": "resources/dark/dot.svg",
-          "light": "resources/light/dot.svg"
+          "dark": "resources/dark/arrow-right.svg",
+          "light": "resources/light/arrow-right.svg"
         }
       }
     ],

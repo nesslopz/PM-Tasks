@@ -27,19 +27,19 @@
     "endpoints": {
       "complete": {
         "url": "/tasks/{id}/complete.json",
-        "method": "GET"
+        "method": "PUT"
       },
       "uncomplete": {
         "url": "/tasks/{id}/uncomplete.json",
-        "method": "GET"
+        "method": "PUT"
       },
       "update": {
         "url": "/tasks/{id}.json",
-        "method": "GET"
+        "method": "PUT"
       },
       "delete": {
         "url": "/tasks/{id}.json",
-        "method": "GET"
+        "method": "DELETE"
       }
     },
     "messages": {

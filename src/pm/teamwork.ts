@@ -1,22 +1,25 @@
-import Provider from '../providers';
+import Provider, { ProjectItem } from '../providers';
 
 import { window } from 'vscode';
 import Task from '../tasks/tasks';
 
 export default class Teamwork extends Provider {
 
-  async getProjects() {
+  async getProjects():Promise<ProjectItem[]> {
     if (!this.user)
       await this.register();
 
     const projects = await this.fetch(this.routes.projects.all);
     if (projects) {
-      return projects.map((project:any) => {
+      return projects.map((project:any):ProjectItem => {
         return {
           id         : project.id,
           label      : `${project.starred ? "$(star)" : ""} ${project.name}`,
           description: `${project.company ? project.company.name : ''}`
         }
+      }).filter((project:ProjectItem) => {
+        // Get only projects are not in current workspace
+        return this.projects.indexOf(project.id) === -1;
       });
     }
     return [];
@@ -57,8 +60,11 @@ export default class Teamwork extends Provider {
             // Request Project Tasks
             const projectTasks = await this.fetch(route, {
               params: {
+                // Get subtasks
                 "nestSubTasks"         : "yes",
+                // Pre-sort by due-date
                 "sort"                 : "duedate",
+                // return "Mine" * Tasks
                 "responsible-party-ids": this.user.userId,
               }
             });
@@ -127,6 +133,22 @@ export default class Teamwork extends Provider {
   }
 
   /**
+   * Complete a task
+   */
+  async completeTask(id: Task['id']) {
+    let endpoint = this.endpoints.complete;
+
+    let response = this.fetch(endpoint.url.replace('{id}', id), {
+      method: endpoint.method
+    })
+    .then(res => res)
+    .catch(error => {
+      window.showErrorMessage(error.MESSAGE);
+      return null;
+    });
+  }
+
+  /**
    * Generate Teamwork password
    * @param str usertoken
    * @returns reversed string
@@ -155,14 +177,14 @@ export default class Teamwork extends Provider {
           return countPeople.map((name, index) => {
             return {
               id  : task["responsible-party-id"].split(',')[index],
-              name: task["responsible-party-names"].split('|')[index]
+              fullName: task["responsible-party-names"].split('|')[index]
             }
           });
         } else {
           // only 1 person assigned
           return [{
-            name: task["responsible-party-names"],
-            id  : task["responsible-party-id"]
+            id  : task["responsible-party-id"],
+            fullName: task["responsible-party-names"]
           }];
         }
       } else if ( task['responsible-party-summary'] ) {
@@ -181,23 +203,28 @@ export default class Teamwork extends Provider {
 
     return new Task({
       id         : task["id"],
+      provider   : this,
       title      : task["content"],
       date       : task["due-date"],
       who        : assignPeople(true),
-      type       : task["priority"] == "high" ? 'urgent' : 'normal',
-      hasChildren: (task["subTasks"]) ? true : false,
-      data: {
+      type       : task["priority"] == "high" ? 'urgent': 'normal',
+      hasChildren: (task["subTasks"]) ? true            : false,
+      data       : {
         start        : task["start-date"],
         end          : task["due-date"],
-        project      : task["project-id"],
+        project      : {
+          label: task["project-name"],
+          id   : task["project-id"]
+        },
         progress     : task["progress"],
         estimatedTime: task["estimated-minutes"],
+        description  : task["description"],
         comments     : task["comments-count"],
         private      : task["private"],
         status       : task["status"],
         lastChanged  : task["last-changed-on"],
         people       : assignPeople(),
-        subTasks     : (task['subTasks']) ? task['subTasks'].map( (task:any) => this.teamworkTask(task) ) : undefined,
+        subTasks     : (task['subTasks']) ? task['subTasks'].map( (task:any) => this.teamworkTask(task) ): undefined,
         creator      : {
           id       : task["creator-id"],
           firstName: task["creator-firstname"],

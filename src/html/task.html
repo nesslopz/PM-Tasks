@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      display: flex;
+      min-height: 100vh;
+      flex-flow: column nowrap;
+    }
+    header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 1em 0;
+    }
+    h1 {
+      flex-shrink: 0;
+    }
+    h1, h2 {
+      margin: 0;
+    }
+    main {
+      /* flex: 1 1 0; */
+      overflow: auto;
+    }
+    section {
+      display        : flex;
+      flex-flow      : row wrap;
+      align-items    : stretch;
+    }
+    article.card {
+      flex: 0 0 auto;
+    }
+    article {
+      flex      : 1 0 auto;
+      padding   : 0.5em;
+      margin    : 0.25em;
+      background: var(--vscode-textBlockQuote-background);
+    }
+    aside {
+      display: none;
+    }
+    footer {
+      text-align: right;
+    }
+
+    footer, article, nav, aside {
+      padding: 1em;
+    }
+
+
+    /**
+      focusBorder
+      foreground
+      widget.shadow
+      selection.background
+      descriptionForeground
+      errorForeground
+      --
+      textBlockQuote.background
+      textBlockQuote.border
+      textCodeBlock.background
+      textLink.activeForeground
+      textLink.foreground
+      textPreformat.foreground
+      textSeparator.foreground
+    */
+
+    input[type="button"],
+    input[type="submit"],
+    button {
+      border: 1px solid transparent;
+      color: var(--vscode-button-foreground);
+      background: var(--vscode-button-background);
+      padding: 0.5em 1em;
+    }
+    input[type="button"]:hover, input[type="button"]:focus,
+    input[type="submit"]:hover, input[type="submit"]:focus,
+    button:hover, button:focus,
+    .btn:hover, .btn:focus {
+      background: var(--vscode-button-hoverBackground);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h2>{__task_title__}</h2>
+    <h1># {__task_id__}</h1>
+  </header>
+  <main>
+    {__task_details__}
+    <hr>
+    <section>
+      <p>
+        <strong>Assigned to:</strong>
+        {__task_people__}
+      </p>
+    </section>
+  </main>
+  <footer>
+    <button class="success" data-action="complete" title="Mark as completed">
+      <img src="{__complete_icon__}">
+      Complete
+    </button>
+  </footer>
+  <script>
+    const vscode = acquireVsCodeApi();
+    let buttons = document.querySelectorAll('[data-action]');
+
+    buttons.forEach(button => {
+      button.addEventListener('click', () => {
+        vscode.postMessage({
+          action: button.getAttribute('data-action')
+        });
+      });
+    });
+  </script>
+</body>
+</html>

@@ -4,12 +4,12 @@ import { xhr } from 'request-light';
 import Task from './tasks/tasks';
 import { queryParams } from './utilities';
 
-
+import * as Messages from './messages.json';
 /**
  * Taskslist provider
  */
 export default class Provider {
-  private pmSettings:WorkspaceConfiguration;
+  protected pmSettings:WorkspaceConfiguration;
 
   public id           ?: string|number;
   public responseType ?: string;
@@ -34,7 +34,7 @@ export default class Provider {
       // Get the array of Project ID's
       .reduce( (current:string[], tasklist:any) => {
         if (Array.isArray(tasklist.projectId))
-          return [...tasklist.projectId]
+          return [...new Set(tasklist.projectId)]
         else
           return [tasklist.projectId];
       }, []);
@@ -49,7 +49,7 @@ export default class Provider {
         // Get the array of Project ID's
         .reduce( (current:string[], tasklist:any) => {
           if (Array.isArray(tasklist.projectId))
-            return [...tasklist.projectId]
+            return [...new Set(tasklist.projectId)]
           else
             return [tasklist.projectId];
         }, []) ;
@@ -101,6 +101,14 @@ export default class Provider {
     return [];
   }
 
+  /**
+   * Complete a task
+   * @param id Task ID to complete
+   * @returns _Promise_
+   */
+  public async completeTask(id:Task["id"]):Promise<any> {
+    return;
+  }
 
   /**
    *
@@ -138,7 +146,7 @@ export default class Provider {
     // Read token
     let newToken = await window.showInputBox({
       ignoreFocusOut: true,
-      prompt: await this.getMessage('insertToken')
+      prompt: Messages.helpers.insertToken
     });
 
     // Return empty
@@ -185,7 +193,7 @@ export default class Provider {
       responseType: this.responseType
     })
     .then(res => JSON.parse(res.responseText))
-    .catch(_ => null);
+    .catch(err => JSON.parse(err.responseText));
 
     if (!response)
       return false;
@@ -210,13 +218,13 @@ export default class Provider {
           return response[keys[0]];
         }
       } else {
-        return false;
+        throw response;
       }
   }
 
 }
 
-interface Manager {
+export interface Manager {
   id: string,
   label: string,
   description?: string,
@@ -268,6 +276,6 @@ interface Manager {
   }
 }
 
-interface ProjectItem extends QuickPickItem {
+export interface ProjectItem extends QuickPickItem {
   id: string,
 }

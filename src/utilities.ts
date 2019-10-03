@@ -1,10 +1,12 @@
 import Teamwork from './pm/teamwork';
-import Provider from './providers';
+import Provider, { Manager } from './providers';
 
 /**
- * Set Provider
+ * Set a Provider to extenstion context
+ * @param manager JSON object
+ * @returns Provider
  */
-export const setProvider = (manager: any) => {
+export const setProvider = (manager: Manager):Provider => {
   let provider: Provider;
   switch (manager.id) {
     case 'teamwork':

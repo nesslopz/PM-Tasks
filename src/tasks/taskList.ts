@@ -15,10 +15,10 @@ import * as Messages from '../messages.json';
 
 // Classes
 import Provider from '../providers';
-import Task, { TaskItem, ItemMessage } from './tasks';
+import Task, { ItemMessage } from './tasks';
 
 // Utilities
-import { setProvider, taskListSetting } from "../utilities";
+import { setProvider } from "../utilities";
 
 export default class TasklistProvider implements TreeDataProvider<Task> {
 
@@ -36,7 +36,7 @@ export default class TasklistProvider implements TreeDataProvider<Task> {
         this.refresh();
       }
     });
-	}
+  }
 
 	refresh(): void {
 		this._onDidChangeTreeData.fire();
@@ -54,7 +54,7 @@ export default class TasklistProvider implements TreeDataProvider<Task> {
       if (!isConfigured) {
         // Return item with message and configure command
         return Promise.resolve([
-          new ItemMessage(Messages.warning.noSettings, 'warning',
+          new ItemMessage(Messages.warning.noSettings, 'info',
           {
             title: "config",
             command: "PMTaskList.config",
@@ -97,7 +97,7 @@ export default class TasklistProvider implements TreeDataProvider<Task> {
          * Return message of empty tasks
          */
         return Promise.resolve([
-          new ItemMessage(Messages.helpers.noTasks, '')
+          new ItemMessage(Messages.helpers.noTasks)
         ]);
       }
 

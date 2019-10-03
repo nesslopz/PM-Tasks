@@ -8,10 +8,11 @@ import tasksCommands from "./tasks/commands";
 export function activate(context: ExtensionContext) {
 
   const pmSettings = workspace.getConfiguration('pm', null);
-  let tasksProvider = window.registerTreeDataProvider('PMTaskList', new TasklistProvider(pmSettings));
+  let tasksProvider = new TasklistProvider(pmSettings);
 
-  tasksCommands(context);
-  context.subscriptions.push(tasksProvider);
+  let TreeDataProvider = window.registerTreeDataProvider('PMTaskList', tasksProvider);
+  tasksCommands(context, tasksProvider);
+  context.subscriptions.push(TreeDataProvider);
 }
 
 // Deactivated
