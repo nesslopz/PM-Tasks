@@ -228,21 +228,21 @@
   "devDependencies": {
     "@types/mocha": "^2.2.42",
     "@types/moment": "^2.13.0",
-    "@types/node": "^10.14.20",
-    "@types/showdown": "^1.9.3",
+    "@types/node": "^10.17.4",
+    "@types/showdown": "^1.9.1",
     "eslint": "^5.16.0",
     "eslint-config-standard": "^12.0.0",
     "eslint-plugin-import": "^2.18.2",
     "eslint-plugin-node": "^9.2.0",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "^4.0.1",
-    "tslint": "^5.20.0",
-    "typescript": "^3.6.3",
+    "tslint": "^5.20.1",
+    "typescript": "^3.7.2",
     "vscode": "^1.1.36"
   },
   "bugs": {
     "url": "https://github.com/nesslopz/PM-Tasks/issues",
-    "email": "me@nesslopz.com"
+    "email": "soy@nesslopz.com"
   },
   "repository": {
     "type": "git",
@@ -251,7 +251,7 @@
   "homepage": "https://github.com/nesslopz/PM-Tasks/blob/master/README.md",
   "dependencies": {
     "moment": "^2.24.0",
-    "request-light": "^0.2.4",
-    "showdown": "^1.9.0"
+    "request-light": "^0.2.5",
+    "showdown": "^1.9.1"
   }
 }
