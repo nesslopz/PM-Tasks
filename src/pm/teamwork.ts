@@ -1,9 +1,24 @@
-import Provider, { ProjectItem } from '../providers';
+import Provider, { ProjectItem, Manager } from '../providers';
 
-import { window } from 'vscode';
-import Task from '../tasks/tasks';
+import { window, workspace } from 'vscode';
+import Task, { ItemTaskList } from '../tasks/tasks';
+import { taskListSetting } from '../utilities';
 
 export default class Teamwork extends Provider {
+
+  private tasklists: taskListSetting[] = this.pmSettings.get('taskList', []);
+
+  constructor(manager:Manager) {
+    super(manager);
+
+    workspace.onDidChangeConfiguration(changed => {
+      if (changed.affectsConfiguration('pm.taskList')) {
+        this.pmSettings = workspace.getConfiguration('pm', null);
+        // Get Projects
+        this.tasklists = this.pmSettings.get('taskList', []);
+      }
+    });
+  }
 
   async getProjects():Promise<ProjectItem[]> {
     if (!this.user)
@@ -15,12 +30,17 @@ export default class Teamwork extends Provider {
         return {
           id         : project.id,
           label      : `${project.starred ? "$(star)" : ""} ${project.name}`,
-          description: `${project.company ? project.company.name : ''}`
+          description: `${project.company ? project.company.name : ''}`,
+          name       : project.name
         }
-      }).filter((project:ProjectItem) => {
-        // Get only projects are not in current workspace
-        return this.projects.indexOf(project.id) === -1;
       });
+      //
+      // No more filter (in Teamwork use Takslist instead and filter them)
+      //
+      // .filter((project:ProjectItem) => {
+      //   // Get only projects are not in current workspace
+      //   return this.projects.findIndex((proj) => proj.id === project.id) === -1;
+      // });
     }
     return [];
   }
@@ -40,7 +60,7 @@ export default class Teamwork extends Provider {
 
           this.fetch(getSubtasks, {
             params: {
-              sort: 'duedate'
+              sort: this.pmSettings.get('sortBy')
             }
           })
             .then(subTasks => {
@@ -50,30 +70,41 @@ export default class Teamwork extends Provider {
             })
         }
       } else {
-        this.projects.reduce(async (previousProjectTasks:Promise<Task[]>, idProject) => {
+        this.tasklists.reduce(async (previousProjectTasks:Promise<Task[]>, tasklist) => {
           // Wait for promise
           let currentProjectTasks = await previousProjectTasks;
           // Validate Project ID
-          if (idProject && idProject.length > 0) {
-            let route = this.routes.tasks.project;
-            route = route.replace('{id}', idProject);
+          if (tasklist.id && tasklist.id.length > 0) {
+
+            let route = this.routes.tasks.tasklist;
+            route = route.replace('{id}', tasklist.id);
             // Request Project Tasks
             const projectTasks = await this.fetch(route, {
               params: {
                 // Get subtasks
-                "nestSubTasks"         : "yes",
-                // Pre-sort by due-date
-                "sort"                 : "duedate",
+                "nestSubTasks"         : this.pmSettings.get('nestSubTasks') ? "yes" : "no",
+                // Pre-sort by setting choice
+                "sort"                 : this.pmSettings.get('sortBy'),
                 // return "Mine" * Tasks
-                "responsible-party-ids": this.user.userId,
+                "responsible-party-ids": this.pmSettings.get('onlyMine') ? this.user.userId : "-1",
               }
             });
+
             if (projectTasks) {
-              // Update Project Tasks array
-              currentProjectTasks = [
-                ...currentProjectTasks,
-                ...projectTasks.map( (task:any) => this.teamworkTask(task) )
-              ];
+
+              if (this.pmSettings.get('groupTasksByProject')) {
+                // Update Project Tasks array
+                currentProjectTasks = [
+                  ...currentProjectTasks,
+                  ...[new ItemTaskList( tasklist, projectTasks.map( this.teamworkTask, this ) ) ]
+                ];
+              } else {
+                currentProjectTasks = [
+                  ...currentProjectTasks,
+                  ...projectTasks.map( this.teamworkTask, this ) // Convert to teamworkTask
+                ];
+              }
+
             }
           }
           // Return array mixed
@@ -97,10 +128,95 @@ export default class Teamwork extends Provider {
     });
   }
 
+
+  /**
+   * Get QuickPickItems with TaskList data
+   * shows a Project selector first
+   * @returns taskListSetting[]
+   */
+  async getTaskLists():Promise<taskListSetting[]> {
+    return new Promise(async (resolve, reject) => {
+      // Create a custom QuickPick selector to show progress while getting data
+      let quickPickTaskList                    = window.createQuickPick();
+          quickPickTaskList.busy               = true;
+          quickPickTaskList.enabled            = false;
+          quickPickTaskList.canSelectMany      = false;
+          quickPickTaskList.matchOnDetail      = true;
+          quickPickTaskList.ignoreFocusOut     = true;
+          quickPickTaskList.matchOnDescription = true;
+
+      quickPickTaskList.show(); // Show while loading data
+
+      // Get projects list
+      const projectsList = await this.getProjects();
+      if (projectsList) {
+        quickPickTaskList.items = projectsList;
+        // ⬆️ Fill projects and enable selection ⬇️
+        quickPickTaskList.busy    = false;
+        quickPickTaskList.enabled = true;
+
+        // Listen for selection
+        quickPickTaskList.onDidChangeSelection(async (projects:any[]) => {
+          // Show loader
+          quickPickTaskList.items   = [];
+          quickPickTaskList.busy    = true;
+          quickPickTaskList.enabled = false;
+
+          const project = projects[0];
+          if (project && project.id) {
+            // Get tasklists
+            let tasklistUrl = this.routes.tasklists.project;
+                tasklistUrl = tasklistUrl.replace('{id}', project.id);
+
+            let tasklists = await this.fetch(tasklistUrl);
+            if (tasklists) {
+              // Iterate with Teamwork tasklist object and return as QuickPickItem
+              tasklists = tasklists.map((tasklist:any):taskListSetting => {
+                return {
+                  id            : tasklist.id,
+                  label         : tasklist.name,
+                  description   : `${tasklist.description} (${tasklist["uncompleted-count"]} Tasks)`,
+                  projectManager: this.id,
+                  projectId     : tasklist.projectId,
+                  projectName   : tasklist.projectName
+                }
+              }).filter((tasklist:ProjectItem) => {
+                // Show only tasklist are not in current workspace
+                return this.tasklists.findIndex((tlist) => tasklist.id === tlist.id) === -1;
+              });
+
+              if (tasklists.length > 0) {
+                // Return tasklists
+                resolve(tasklists);
+              } else {
+                quickPickTaskList.items   = [
+                  {
+                    label: "",
+                    description: `No more taskslist in ${project.name}, choose another Project or press {ESC}`,
+                  },
+                  ...quickPickTaskList.items = projectsList.filter(proj => proj.id !== project.id)
+                ];
+                quickPickTaskList.busy    = false;
+                quickPickTaskList.enabled = true;
+              }
+            } else {
+              reject(`There is no tasklists in project ${project.label}`);
+            }
+          } else {
+            quickPickTaskList.items = projectsList;
+            // ⬆️ Fill projects and enable selection ⬇️
+            quickPickTaskList.busy    = false;
+            quickPickTaskList.enabled = true;
+          }
+        });
+      }
+    });
+  }
+
   /**
    * Register provider to get userdata from Teamwork
    */
-  async register() {
+  private async register() {
     const token = await this.getToken();
 
     if (token) {
@@ -208,7 +324,7 @@ export default class Teamwork extends Provider {
       date       : task["due-date"],
       who        : assignPeople(true),
       type       : task["priority"] == "high" ? 'urgent': 'normal',
-      hasChildren: (task["subTasks"]) ? true            : false,
+      hasChildren: (task["subTasks"]) ? true : false,
       data       : {
         start        : task["start-date"],
         end          : task["due-date"],

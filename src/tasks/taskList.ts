@@ -127,7 +127,7 @@ export default class TasklistProvider implements TreeDataProvider<Task> {
     if (
         !Array.isArray(tasklistSettings) ||
         (Array.isArray(tasklistSettings) &&
-          (tasklistSettings.length === 0 || tasklistSettings[0].projectId === "")
+          (tasklistSettings.length === 0 || tasklistSettings[0].id === "")
         )
       ) {
       // There is no Project configured or not in the correct way
@@ -149,7 +149,7 @@ export default class TasklistProvider implements TreeDataProvider<Task> {
       // Initialize manager
       managerList.map(id => {
         // Get only the requested manager
-        const manager = Providers.reduce((previous:any, current:any) => current.id === id ? current : {id: ""}, {id: ""});
+        const manager = Providers.reduce((previous:any, current:any) => (current.id === id) ? current : {id: ""}, {id: ""});
         this.providers.push(setProvider(manager));
       });
       isConfigured = true;

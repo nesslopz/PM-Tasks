@@ -1,4 +1,4 @@
-import { ExtensionContext, ConfigurationTarget, commands, workspace, window, WorkspaceFolder, WebviewPanel, Uri, Disposable } from 'vscode';
+import { ExtensionContext, ConfigurationTarget, commands, workspace, window, WebviewPanel, Uri, Disposable, WorkspaceFolder } from 'vscode';
 
 import * as path from 'path';
 import * as fs from "fs";
@@ -108,12 +108,16 @@ export default function tasksCommands(context: ExtensionContext, tasksProvider:T
           placeHolder: 'Pick Workspace Folder to configure a Project Managment',
           ignoreFocusOut: true
         });
+      } else {
+        workspaceFolder = workspace.workspaceFolders[0];
       }
-      // Get Provider from available list
-      await window.showQuickPick(Providers, {
-        placeHolder: Messages.helpers.selectPm,
-        ignoreFocusOut: true
-      })
+
+      if (workspaceFolder) {
+        // Get Provider from available list
+        await window.showQuickPick(Providers, {
+          placeHolder: Messages.helpers.selectPm,
+          ignoreFocusOut: true
+        })
         .then(async (manager) => {
           if (manager) {
             const provider: Provider = setProvider(manager);
@@ -122,61 +126,45 @@ export default function tasksCommands(context: ExtensionContext, tasksProvider:T
               /**
                * Get Project
                */
-              const project = await window.showQuickPick(
-                await provider.getProjects(), {
-                  canPickMany: false,
-                  matchOnDetail: true,
-                  ignoreFocusOut: true,
+              const tasklists = await provider.getTaskLists();
+              await window.showQuickPick(
+                tasklists,
+                {
+                  canPickMany       : false,
+                  matchOnDetail     : true,
+                  ignoreFocusOut    : true,
                   matchOnDescription: true
-                })
-                .then(async (project) => {
-                  if (project) {
-                    // Get the configuration for the workspace folder
-                    const pmSettings = await workspace.getConfiguration('pm', workspaceFolder ? workspaceFolder.uri : null);
-                    // Update the configuration value
-                    //await configuration.update('pm.tasksProvider', newValue, workspaceFolder.index );
-                    let tasklistSettings = pmSettings.get('taskList', []);
-                    let newSettings = [
-                      ...tasklistSettings,
-                      {
-                        projectId: project.id,
-                        projectManager: manager.id
-                      }
-                    ];
-                    await pmSettings.update('taskList', newSettings, workspaceFolder ? ConfigurationTarget.WorkspaceFolder : ConfigurationTarget.Workspace);
-                    commands.executeCommand('PMTasks.refreshConfigs');
-                  }
-                });
+                }
+              )
+              .then(async (tasklist) => {
+                if (tasklist) {
+                  delete tasklist.description;
+                  // Get the configuration for the workspace folder
+                  const pmSettings = workspace.getConfiguration('pm', workspaceFolder ? workspaceFolder.uri : null);
+                  // Update the configuration value
+                  let tasklistSettings = pmSettings.get('taskList', []);
+                  let newSettings = [
+                    ...tasklistSettings,
+                    tasklist
+                  ];
+                  await pmSettings.update('taskList', newSettings, workspaceFolder ? ConfigurationTarget.WorkspaceFolder : ConfigurationTarget.Workspace);
+                }
+              });
             }
           }
         });
+      }
     } else {
       window.showWarningMessage(Messages.warning.noWorkspace);
     }
+
   };
   let configurePM = commands.registerCommand('PMTaskList.config', configPM);
   let addNewPM = commands.registerCommand('PMTaskList.addProject', configPM);
 
-  /**
-   * Update workspace configuration file, merge id's for same Project Manager
-   */
-  let refreshConfigs = commands.registerCommand('PMTasks.refreshConfigs', async () => {
-    if (workspace.workspaceFolders) {
-      if (workspace.workspaceFolders.length > 1) {
-        // If there's more than 1 folders in workspace, repeat process
-        workspace.workspaceFolders.forEach(async (workspaceFolder) => {
-          return await updateConfigEntries(workspaceFolder);
-        })
-      } else {
-        return await updateConfigEntries();
-      }
-    }
-  });
-
   // Settings
   context.subscriptions.push(configurePM);
   context.subscriptions.push(addNewPM);
-  context.subscriptions.push(refreshConfigs);
   // Tasks
   context.subscriptions.push(refreshTasklist);
   context.subscriptions.push(addTask);
@@ -191,7 +179,7 @@ export default function tasksCommands(context: ExtensionContext, tasksProvider:T
   context.subscriptions.push(completeTask);
 
   const getTaskWebview = (task:Task):string => {
-    const filePath: Uri = Uri.file(path.join(context.extensionPath, 'src', 'html', 'task.html'));
+    const filePath: Uri = Uri.file(path.join(context.extensionPath, 'src', 'templates', 'task.html'));
     let html = fs.readFileSync(filePath.fsPath, 'utf8');
 
     let taskDescription = () => {
@@ -253,7 +241,7 @@ export default function tasksCommands(context: ExtensionContext, tasksProvider:T
       }
     }
 
-    let taskPeople = () => {
+    const taskPeople = () => {
       if (task.data && task.data.people) {
         if (Array.isArray(task.data.people)) {
           return task.data.people.map((person) => person['fullName']).join(', ');
@@ -272,40 +260,5 @@ export default function tasksCommands(context: ExtensionContext, tasksProvider:T
           .replace(/{__task_people__}/gi, taskPeople());
 
     return html;
-  }
-
-  /**
-   * Update config entries
-   */
-  const updateConfigEntries = async (workspaceFolder?: WorkspaceFolder) => {
-    // Get the configuration for the workspace folder
-    const pmSettings = await workspace.getConfiguration('pm', workspaceFolder ? workspaceFolder.uri : null);
-    // Update the configuration value
-    //await configuration.update('pm.tasksProvider', newValue, workspaceFolder.index );
-    let tasklistSettings = pmSettings.get('taskList', []);
-    if (tasklistSettings.length > 0) {
-      // Remove duplicated values from config
-      const newSettings = tasklistSettings.reduce((acumulator:taskListSetting[], project:taskListSetting) => {
-        // Search project manager duplicated
-        const index = acumulator.findIndex((element: any) => element.projectManager === project.projectManager)
-        if (index === -1) {
-          // No duplicates, return both
-          return [...acumulator, project];
-        } else {
-          // Duplicated, make a copy
-          const acumulatorCopy:any = acumulator;
-          // get ID of current project
-          const projectId = acumulatorCopy[index].projectId;
-          acumulatorCopy[index].projectId =
-            [...
-              (typeof projectId === 'string' ? [projectId] : projectId),
-              project.projectId
-            ];
-          acumulatorCopy[index].projectId = [...new Set(acumulatorCopy[index].projectId)];
-          return acumulatorCopy;
-        }
-      }, []);
-      return await pmSettings.update('taskList', newSettings, workspaceFolder ? ConfigurationTarget.WorkspaceFolder : ConfigurationTarget.Workspace);
-    }
   }
 }

@@ -11,14 +11,14 @@ import * as Messages from './messages.json';
 export default class Provider {
   protected pmSettings:WorkspaceConfiguration;
 
-  public id           ?: string|number;
-  public responseType ?: string;
+  public id            : Manager['id'];
+  public responseType ?: Manager['responseType'];
   public routes       ?: Manager["routes"]|any;
   public endpoints    ?: Manager['endpoints']|any;
   public helpers      ?: Manager['helpers']|any;
   public messages     ?: Manager['messages']|any;
 
-  public projects : string[];
+  public projects : ProjectItem[];
 
   private _user ?: any;
   private defaultURL : string = "";
@@ -27,16 +27,20 @@ export default class Provider {
     this.pmSettings = workspace.getConfiguration('pm', null);
 
     Object.assign(this, manager);
+    this.id = manager.id;
 
     this.projects = this.pmSettings.get('taskList', [])
       // Get only project ID of this Provider
       .filter((tasklist:any) => tasklist.projectManager == this.id)
-      // Get the array of Project ID's
-      .reduce( (current:string[], tasklist:any) => {
-        if (Array.isArray(tasklist.projectId))
-          return [...new Set(tasklist.projectId)]
-        else
-          return [tasklist.projectId];
+      // Get the array of Project Items
+      .reduce( (current:ProjectItem[], tasklist:any) => {
+        return [
+          ...current,
+          {
+            id: tasklist.projectId,
+            label: tasklist.projectName,
+          }
+        ]
       }, []);
 
     workspace.onDidChangeConfiguration(changed => {
@@ -44,15 +48,16 @@ export default class Provider {
         this.pmSettings = workspace.getConfiguration('pm', null);
         // Get Projects
         this.projects = this.pmSettings.get('taskList', [])
-        // Get only project ID of this Provider
-        .filter( (tasklist:any) => tasklist.projectManager == this.id )
-        // Get the array of Project ID's
-        .reduce( (current:string[], tasklist:any) => {
-          if (Array.isArray(tasklist.projectId))
-            return [...new Set(tasklist.projectId)]
-          else
-            return [tasklist.projectId];
-        }, []) ;
+        // Get the array of Project Items
+        .reduce( (current:ProjectItem[], tasklist:any) => {
+          return [
+            ...current,
+            {
+              id: tasklist.projectId,
+              label: tasklist.projectName
+            }
+          ]
+        }, []);
       }
     });
   }
@@ -87,10 +92,18 @@ export default class Provider {
 
   /**
    * Get list of Projects
-   * @returns array
+   * @returns array of ProjectItems
    */
   public async getProjects():Promise<ProjectItem[]> {
     return [];
+  }
+
+  /**
+   * Get tasklist if Project Manager works this way
+   * @returns array of ProjectItems
+   */
+  public async getTaskLists():Promise<ProjectItem[]> {
+    return this.getProjects();
   }
 
   /**
@@ -277,5 +290,6 @@ export interface Manager {
 }
 
 export interface ProjectItem extends QuickPickItem {
-  id: string,
+  id   : string,
+  name?: string
 }

@@ -147,23 +147,33 @@
           "items": {
             "type": "object",
             "required": [
-              "projectManager",
-              "projectId"
+              "id",
+              "label",
+              "projectManager"
             ],
             "properties": {
               "projectManager": {
                 "type": "string",
-                "markdownDescription": "ID of Project Managment software _(available in config list selector)_",
+                "markdownDescription": "ID for Project Managment software _(available in config list selector)_",
                 "enum": [
                   "teamwork"
                 ]
               },
+              "id": {
+                "type": "string",
+                "markdownDescription": "ID for taskList"
+              },
+              "label": {
+                "type": "string",
+                "markdownDescription": "Label to show in TaskList Tree"
+              },
               "projectId": {
-                "type": [
-                  "string",
-                  "array"
-                ],
-                "markdownDescription": "Id of Project with Tasks for this project, _optional:_ `array` with ID's"
+                "type": "string",
+                "markdownDescription": "ID for Project"
+              },
+              "projectName": {
+                "type": "string",
+                "markdownDescription": "Project's Name"
               }
             }
           },
@@ -174,6 +184,11 @@
           "default": null,
           "description": "Your Teamwork token to enable and use it"
         },
+        "pm.onlyMine": {
+          "type": "boolean",
+          "default": "true",
+          "markdownDescription": "Get only `assigned to me` Tasks "
+        },
         "pm.autoSync": {
           "type": "boolean",
           "default": true,
@@ -181,8 +196,24 @@
         },
         "pm.groupTasksByProject": {
           "type": "boolean",
-          "default": "false",
-          "description": "Group tasks in Project tree"
+          "default": "true",
+          "description": "Group taskslists in Project tree"
+        },
+        "pm.nestSubTasks": {
+          "type": "boolean",
+          "default": "true",
+          "description": "Nest SubTasks"
+        },
+        "pm.sortBy": {
+          "type": "string",
+          "default": "duedate",
+          "description": "Order tasks in Project tree",
+          "enum": [
+            "duedate", "duedateDESC", "startdate", "dateadded", "priority", "project", "duestartdate", "duestartdatedesc", "dateupdated"
+          ],
+          "enumDescriptions": [
+            "Due date", "Due date DESC", "Start date", "Added", "Priority", "Project", "Due start date", "Due start date DESC", "Date updated"
+          ]
         }
       }
     }

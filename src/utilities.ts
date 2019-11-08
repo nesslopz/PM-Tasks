@@ -1,5 +1,6 @@
 import Teamwork from './pm/teamwork';
-import Provider, { Manager } from './providers';
+import Provider, { Manager, ProjectItem } from './providers';
+import { QuickPickItem } from 'vscode';
 
 /**
  * Set a Provider to extenstion context
@@ -33,7 +34,10 @@ export const queryParams = (params:any):string => {
 /**
  * TaskList Setting interface
  */
-export interface taskListSetting {
-  projectId     : string|string[];
-  projectManager: string;
+export interface taskListSetting extends QuickPickItem {
+  id             : ProjectItem["id"];
+  label          : ProjectItem["label"];
+  projectManager : Manager["id"];
+  projectId     ?: ProjectItem["id"];
+  projectName   ?: ProjectItem["label"];
 }

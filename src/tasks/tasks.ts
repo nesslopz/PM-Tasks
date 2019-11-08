@@ -7,6 +7,7 @@ import {
 import * as path from 'path';
 import * as moment from 'moment';
 import Provider, { ProjectItem } from '../providers';
+import { taskListSetting } from '../utilities';
 
 export default class Task extends TreeItem {
 
@@ -110,6 +111,37 @@ export default class Task extends TreeItem {
   contextValue = 'task';
 }
 
+export class ItemTaskList extends Task {
+  constructor(
+    public tasklist         : taskListSetting,
+    public tasks            : Task[] = [],
+    public readonly command?: Command
+  )
+  {
+    super(
+      { id: tasklist.id,
+        title: tasklist.label,
+        hasChildren: true,
+        data: {
+          subTasks: tasks
+        }
+      }
+    );
+  }
+
+  collapsibleState = TreeItemCollapsibleState.Expanded;
+  iconPath = undefined;
+
+	get tooltip(): string {
+    return `${this.command ? this.command.tooltip : this.tasklist.label}`;
+	}
+
+	get description() {
+		return this.tasklist.projectName || "";
+  }
+
+	contextValue = 'taskList';
+}
 
 export class ItemMessage extends Task {
 
