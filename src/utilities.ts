@@ -1,6 +1,6 @@
 import Teamwork from './pm/teamwork';
 import Provider, { Manager, ProjectItem } from './providers';
-import { QuickPickItem } from 'vscode';
+import { QuickPickItem, workspace, WorkspaceFolder, window } from 'vscode';
 
 /**
  * Set a Provider to extenstion context
@@ -18,6 +18,24 @@ export const setProvider = (manager: Manager):Provider => {
       break;
   }
   return provider;
+}
+
+export const getCurrentWorkspace = async () => {
+  if (!workspace.workspaceFolders)
+    return;
+  else {
+    let workspaceFolder: WorkspaceFolder | undefined;
+    if (workspace.workspaceFolders.length > 1) {
+      // If there's more than 1 folders in workspace, pick one
+      workspaceFolder = await window.showWorkspaceFolderPick({
+        placeHolder: 'Pick Workspace Folder to configure a Project Manager',
+        ignoreFocusOut: true
+      });
+    } else {
+      workspaceFolder = workspace.workspaceFolders[0];
+    }
+    return workspaceFolder;
+  }
 }
 
 /**

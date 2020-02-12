@@ -10,8 +10,7 @@ import * as Messages from '../messages.json';
 
 // Classes and Utilities
 import Provider from '../providers';
-import { setProvider, taskListSetting } from "../utilities";
-import Task from './tasks.js';
+import { setProvider, taskListSetting, getCurrentWorkspace } from "../utilities";
 import moment = require('moment');
 import TasklistProvider from './tasklist.js';
 
@@ -100,17 +99,7 @@ export default function tasksCommands(context: ExtensionContext, tasksProvider:T
    */
   // Configure a Project Managment
   const configPM = async () => {
-    if (workspace.workspaceFolders) {
-      let workspaceFolder: WorkspaceFolder | undefined;
-      if (workspace.workspaceFolders.length > 1) {
-        // If there's more than 1 folders in workspace, pick one
-        workspaceFolder = await window.showWorkspaceFolderPick({
-          placeHolder: 'Pick Workspace Folder to configure a Project Managment',
-          ignoreFocusOut: true
-        });
-      } else {
-        workspaceFolder = workspace.workspaceFolders[0];
-      }
+    let workspaceFolder = await getCurrentWorkspace();
 
       if (workspaceFolder) {
         // Get Provider from available list
@@ -153,7 +142,6 @@ export default function tasksCommands(context: ExtensionContext, tasksProvider:T
             }
           }
         });
-      }
     } else {
       window.showWarningMessage(Messages.warning.noWorkspace);
     }
