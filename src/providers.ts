@@ -182,6 +182,7 @@ export default class Provider {
     url:string,
     {
       method = "GET",
+      body,
       user,
       password,
       base   = this.url,
@@ -190,6 +191,7 @@ export default class Provider {
     } :
     {
       method   ?: string,
+      body     ?: object,
       user     ?: string,
       password ?: string,
       base     ?: string,
@@ -203,7 +205,8 @@ export default class Provider {
       user        : user || this.user.username,
       password    : password || this.user.password,
       strictSSL   : useSSL,
-      responseType: this.responseType
+      responseType: this.responseType,
+      data        : JSON.stringify(body)
     })
     .then(res => JSON.parse(res.responseText))
     .catch(err => JSON.parse(err.responseText));
