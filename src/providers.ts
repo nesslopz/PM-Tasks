@@ -2,7 +2,7 @@ import { workspace, WorkspaceConfiguration, ConfigurationTarget, Uri, commands, 
 import { xhr } from 'request-light';
 
 import Task from './tasks/tasks';
-import { queryParams } from './utilities';
+import { queryParams, taskListSetting } from './utilities';
 
 import * as Messages from './messages.json';
 /**
@@ -115,12 +115,32 @@ export default class Provider {
   }
 
   /**
+   * Create a Task in Provider
+   * @param taskListID ID of taskList
+   * @param content taskContent
+   */
+  public async createTask(taskListID:taskListSetting['id'], content:any):Promise<Task|boolean> {
+    return true;
+  }
+
+  /**
    * Complete a task
    * @param id Task ID to complete
    * @returns _Promise_
    */
   public async completeTask(id:Task["id"]):Promise<any> {
     return;
+  }
+
+
+  /**
+   * Get People from
+   * @param type Type of search
+   * @param id Project ID or Tasklist ID
+   * @returns TaskData["people"]
+   */
+  public async getPeople(tasklist:taskListSetting):Promise<Person[]> {
+    return [];
   }
 
   /**
@@ -295,4 +315,9 @@ export interface Manager {
 export interface ProjectItem extends QuickPickItem {
   id   : string,
   name?: string
+}
+
+export interface Person extends QuickPickItem {
+  id     : string,
+  alias ?: string
 }

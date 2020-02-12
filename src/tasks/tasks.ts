@@ -119,7 +119,8 @@ export class ItemTaskList extends Task {
   )
   {
     super(
-      { id: tasklist.id,
+      {
+        id: tasklist.id,
         title: tasklist.label,
         hasChildren: true,
         data: {

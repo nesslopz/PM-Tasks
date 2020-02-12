@@ -14,6 +14,9 @@
     "insertToken": "Token for this Project Manager",
     "noTasks": "0 Tasks",
     "emptyTasks": "There is not tasks in this project / tasklist. Check your configuration",
-    "selectPm": "Select the Project Managment software for this project"
+    "selectPm": "Select the Project Managment software for this project",
+    "createTask": "Create a new Task",
+    "creatingTask": "Creating task...",
+    "noTaskSelected": "This action is only available through the 'PM Tasks' panel"
   }
 }

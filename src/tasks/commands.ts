@@ -1,4 +1,4 @@
-import { ExtensionContext, ConfigurationTarget, commands, workspace, window, WebviewPanel, Uri, Disposable, WorkspaceFolder } from 'vscode';
+import { ExtensionContext, ConfigurationTarget, commands, workspace, window, WebviewPanel, Uri, Disposable, ProgressLocation } from 'vscode';
 
 import * as path from 'path';
 import * as fs from "fs";
@@ -11,6 +11,7 @@ import * as Messages from '../messages.json';
 // Classes and Utilities
 import Provider from '../providers';
 import { setProvider, taskListSetting, getCurrentWorkspace } from "../utilities";
+import Task, { TaskItem } from './tasks.js';
 import moment = require('moment');
 import TasklistProvider from './tasklist.js';
 
@@ -21,14 +22,103 @@ export default function tasksCommands(context: ExtensionContext, tasksProvider:T
   // Track currently webview panel
   let currentPanel: WebviewPanel | undefined = undefined;
   let currentPanelListener: Disposable;
-  let currentProvider : Provider | undefined = undefined;
   /**
    * Tasks Commands
    */
   let refreshTasklist = commands.registerCommand('PMTaskList.refreshTasklist', () => tasksProvider.refresh());
-  let addTask = commands.registerCommand('PMTaskList.addTask', () => {
-    window.showInformationMessage(`New Task into ${currentProvider}`)
+
+  let addTask = commands.registerCommand('PMTaskList.addTask', async (tasklist:taskListSetting) => {
+
+    if (!tasklist) {
+      const workspaceFolder = await getCurrentWorkspace();
+      const pmSettings = workspace.getConfiguration('pm', workspaceFolder ? workspaceFolder.uri : null);
+      // Update the configuration value
+      let tasklistSettings:taskListSetting[] = pmSettings.get('taskList', []);
+      if (tasklistSettings.length > 1) {
+        let pickTasklist = await window.showQuickPick(tasklistSettings, {
+          placeHolder: Messages.helpers.selectPm,
+          ignoreFocusOut: true,
+        })
+        .then(tasklist => tasklist);
+
+        // Validates if is not canceled, if case, break process
+        if (!pickTasklist)
+          return;
+        else
+          tasklist = pickTasklist; // Reasign command parameter `tasklist`
+      } else {
+        tasklist = tasklistSettings[0]; // Take the first element
+      }
+    }
+
+    // get provider
+    let provider = tasksProvider.providers.find(provider => provider.id === tasklist.projectManager);
+    if (!provider) {
+      provider = await window.showQuickPick(Providers, {
+        placeHolder: Messages.helpers.selectPm,
+        ignoreFocusOut: true
+      })
+      .then((manager:any) => setProvider(manager));
+    }
+
+    let newTask:TaskItem = {
+      title: await window.showInputBox({
+        placeHolder: provider.helpers.newTaskPlaceholder
+      }) || ""
+    }
+
+    if ( newTask.title ) {
+      // let title: string = newTask.split(/^(((?!([@\[\]])).)+)([@\w]+)?\s?([\[\w+\]]+)?/gi);
+
+      // Assign person to task
+      // if ( !who ) {
+      newTask.who = await window
+                    .showQuickPick( await provider.getPeople( tasklist ) )
+                    .then(person => person?.id)
+      // }
+      /*  else {
+        who = await provider.getPeople( tasklist )
+        .then( people => {
+          let posiblePerson = people.filter(person => (person.alias === who || person.alias === `@${who}`))
+          if ( posiblePerson.length > 0 )
+            return posiblePerson[0].id
+        }) || '';
+      } */
+      // Assign a due date
+      // if ( !due ) {
+      newTask.date = await window.showInputBox({
+        placeHolder: "dd/mm/yyyy",
+        validateInput: value => !moment(value, [
+            "ddd",
+            "dddd",
+            "MM-DD-YYYY",
+            "MM/DD/YYYY",
+            "DD-MM-YYYY",
+            "DD/MM/YYYY"
+          ]).isValid() ? 'Invalid' : ''
+      })
+      // }
+      // Create Task
+      window.withProgress({
+          title: Messages.helpers.creatingTask,
+          location: ProgressLocation.Window
+        }, _ => {
+          return new Promise((resolve, reject) => {
+            provider!.createTask(tasklist.id, newTask)
+            .then(_ => {
+              commands.executeCommand('PMTaskList.refreshTasklist');
+              resolve();
+            })
+            .catch(error => {
+              window.showErrorMessage(error.MESSAGE);
+              reject(error)
+            });
+          })
+      })
+
+    }
   });
+
   let viewTask = commands.registerCommand('PMTask.viewTask', async (task:Task) => {
     if (task) {
       const columnToShowIn = window.activeTextEditor
@@ -59,10 +149,13 @@ export default function tasksCommands(context: ExtensionContext, tasksProvider:T
             case 'complete':
               // Complete task
               task.complete().then(() => {
-                window.showInformationMessage(`Task ${ task.id } has been Completed`);
+                window.showInformationMessage(`"${ task.label }" has been Completed`);
                 tasksProvider.refresh(); // Refresh tasklist
                 if (currentPanel) // if webview panel is open (it should be) close it
                   currentPanel.dispose();
+              })
+              .catch((error:Error) => {
+                window.showErrorMessage(error.message);
               });
             return;
           }
@@ -78,6 +171,8 @@ export default function tasksCommands(context: ExtensionContext, tasksProvider:T
         null,
         context.subscriptions
       );
+    } else {
+      window.showInformationMessage(Messages.helpers.noTaskSelected);
     }
   });
   /**
@@ -87,11 +182,19 @@ export default function tasksCommands(context: ExtensionContext, tasksProvider:T
    * let editTask = commands.registerCommand('PMTask.editTask', task => window.showWarningMessage(`Edit ${ task.label }`))
    * let deleteTask = commands.registerCommand('PMTask.deleteTask', task => window.showErrorMessage(`Delete ${ task.label }`))
    */
-  let completeTask = commands.registerCommand('PMTask.completeTask', (task:Task) => {
-    task.complete().then(() => {
-      window.showInformationMessage(`Task ${ task.label } has been Completed`);
-      tasksProvider.refresh();
-    });
+  let completeTask = commands.registerCommand('PMTask.completeTask', async (task?:Task) => {
+    if (!task) {
+      window.showInformationMessage(Messages.helpers.noTaskSelected);
+    } else {
+      task.complete()
+      .then(() => {
+        window.showInformationMessage(`"${ task.label }" has been Completed`);
+        tasksProvider.refresh();
+      })
+      .catch((error:Error) => {
+        window.showErrorMessage(error.message);
+      });
+    }
   });
 
   /**
@@ -101,47 +204,47 @@ export default function tasksCommands(context: ExtensionContext, tasksProvider:T
   const configPM = async () => {
     let workspaceFolder = await getCurrentWorkspace();
 
-      if (workspaceFolder) {
-        // Get Provider from available list
-        await window.showQuickPick(Providers, {
-          placeHolder: Messages.helpers.selectPm,
-          ignoreFocusOut: true
-        })
-        .then(async (manager) => {
-          if (manager) {
-            const provider: Provider = setProvider(manager);
+    if (workspaceFolder) {
+      // Get Provider from available list
+      await window.showQuickPick(Providers, {
+        placeHolder: Messages.helpers.selectPm,
+        ignoreFocusOut: true
+      })
+      .then(async (manager) => {
+        if (manager) {
+          const provider: Provider = setProvider(manager);
 
-            if (provider) {
-              /**
-               * Get Project
-               */
-              const tasklists = await provider.getTaskLists();
-              await window.showQuickPick(
-                tasklists,
-                {
-                  canPickMany       : false,
-                  matchOnDetail     : true,
-                  ignoreFocusOut    : true,
-                  matchOnDescription: true
-                }
-              )
-              .then(async (tasklist) => {
-                if (tasklist) {
-                  delete tasklist.description;
-                  // Get the configuration for the workspace folder
-                  const pmSettings = workspace.getConfiguration('pm', workspaceFolder ? workspaceFolder.uri : null);
-                  // Update the configuration value
-                  let tasklistSettings = pmSettings.get('taskList', []);
-                  let newSettings = [
-                    ...tasklistSettings,
-                    tasklist
-                  ];
-                  await pmSettings.update('taskList', newSettings, workspaceFolder ? ConfigurationTarget.WorkspaceFolder : ConfigurationTarget.Workspace);
-                }
-              });
-            }
+          if (provider) {
+            /**
+             * Get Project
+             */
+            const tasklists = await provider.getTaskLists();
+            await window.showQuickPick(
+              tasklists,
+              {
+                canPickMany       : false,
+                matchOnDetail     : true,
+                ignoreFocusOut    : true,
+                matchOnDescription: true
+              }
+            )
+            .then(async (tasklist) => {
+              if (tasklist) {
+                delete tasklist.description;
+                // Get the configuration for the workspace folder
+                const pmSettings = workspace.getConfiguration('pm', workspaceFolder ? workspaceFolder.uri : null);
+                // Update the configuration value
+                let tasklistSettings = pmSettings.get('taskList', []);
+                let newSettings = [
+                  ...tasklistSettings,
+                  tasklist
+                ];
+                await pmSettings.update('taskList', newSettings, workspaceFolder ? ConfigurationTarget.WorkspaceFolder : ConfigurationTarget.Workspace);
+              }
+            });
           }
-        });
+        }
+      });
     } else {
       window.showWarningMessage(Messages.warning.noWorkspace);
     }

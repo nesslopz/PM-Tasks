@@ -9,7 +9,8 @@
       "auth": "https://api.teamwork.com/authenticate.json",
       "projects": {
         "all": "/projects.json",
-        "single": "/projects/{id}.json"
+        "single": "/projects/{id}.json",
+        "people": "/projects/{id}/people.json"
       },
       "tasklists": {
         "all": "/tasklists.json",
@@ -48,7 +49,7 @@
         "register": "There's an problem trying to connect to Teamwork, check your token"
       },
       "error": {
-
+        "taskFailed": "There's an error creating the task"
       },
       "actions": {
         "updateToken": "Update Token"
@@ -57,7 +58,8 @@
     "helpers": {
       "getToken": "https://support.teamwork.com/projects/using-teamwork-projects/locating-your-api-key",
       "unassigned": "Anyone",
-      "self": "You"
+      "self": "You",
+      "newTaskPlaceholder": "What needs to be done?"
     }
   }
 ]

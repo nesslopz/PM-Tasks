@@ -1,8 +1,9 @@
-import Provider, { ProjectItem, Manager } from '../providers';
+import Provider, { ProjectItem, Manager, Person } from '../providers';
 
 import { window, workspace } from 'vscode';
-import Task, { ItemTaskList } from '../tasks/tasks';
+import Task, { ItemTaskList, TaskItem } from '../tasks/tasks';
 import { taskListSetting } from '../utilities';
+import moment = require('moment');
 
 export default class Teamwork extends Provider {
 
@@ -63,11 +64,11 @@ export default class Teamwork extends Provider {
               sort: this.pmSettings.get('sortBy')
             }
           })
-            .then(subTasks => {
-              if (subTasks) {
-                resolve(subTasks.map( (task:any) => this.teamworkTask(task) ));
-              }
-            })
+          .then(subTasks => {
+            if (subTasks) {
+              resolve(subTasks.map( (task:any) => this.teamworkTask(task) ));
+            }
+          })
         }
       } else {
         this.tasklists.reduce(async (previousProjectTasks:Promise<Task[]>, tasklist) => {
@@ -86,7 +87,7 @@ export default class Teamwork extends Provider {
                 // Pre-sort by setting choice
                 "sort"                 : this.pmSettings.get('sortBy'),
                 // return "Mine" * Tasks
-                "responsible-party-ids": this.pmSettings.get('onlyMine') ? this.user.userId : "-1",
+                "responsible-party-ids": this.pmSettings.get('onlyMine') ? this.user.userId : undefined,
               }
             });
 
@@ -128,6 +129,32 @@ export default class Teamwork extends Provider {
     });
   }
 
+  async createTask(taskListID:taskListSetting['id'], {title, who, date}:TaskItem):Promise<Task|boolean> {
+    let create = this.routes.tasks.tasklist;
+    create = create.replace('{id}', taskListID)
+
+    let newTask = {
+      "content": title,
+      "responsible-party-id": who,
+      "due-date": date ? moment(date, [
+        "ddd",
+        "dddd",
+        "MM-DD-YYYY",
+        "MM/DD/YYYY",
+        "DD-MM-YYYY",
+        "DD/MM/YYYY"
+      ]).format('YYYYMMDD') : undefined
+    };
+
+    return await this.fetch(create, {
+      method: "POST",
+      body: {
+        "todo-item": newTask
+      }
+    })
+    .then(res => res)
+    .catch(error => {throw error});
+  }
 
   /**
    * Get QuickPickItems with TaskList data
@@ -213,6 +240,25 @@ export default class Teamwork extends Provider {
     });
   }
 
+  async getPeople(tasklist: taskListSetting):Promise<Person[]> {
+    let people = await this.fetch( this.routes.projects.people.replace('{id}', tasklist.projectId) )
+
+    let availablePeople:Person[] = [
+      {
+        id: 0,
+        label: this.helpers.unassigned,
+        picked: true,
+        alwaysShow: true
+      },
+      ...people.map((person:any) => ({
+        id: person.id,
+        label: person["full-name"]
+      }))
+    ];
+
+    return availablePeople;
+  }
+
   /**
    * Register provider to get userdata from Teamwork
    */
@@ -254,13 +300,12 @@ export default class Teamwork extends Provider {
   async completeTask(id: Task['id']) {
     let endpoint = this.endpoints.complete;
 
-    let response = this.fetch(endpoint.url.replace('{id}', id), {
+    return await this.fetch(endpoint.url.replace('{id}', id), {
       method: endpoint.method
     })
     .then(res => res)
     .catch(error => {
-      window.showErrorMessage(error.MESSAGE);
-      return null;
+      throw new Error(error.MESSAGE);
     });
   }
 
