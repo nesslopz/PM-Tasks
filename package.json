@@ -186,7 +186,7 @@
         },
         "pm.onlyMine": {
           "type": "boolean",
-          "default": "true",
+          "default": true,
           "markdownDescription": "Get only `assigned to me` Tasks "
         },
         "pm.autoSync": {
@@ -196,12 +196,12 @@
         },
         "pm.groupTasksByProject": {
           "type": "boolean",
-          "default": "true",
+          "default": true,
           "description": "Group taskslists in Project tree"
         },
         "pm.nestSubTasks": {
           "type": "boolean",
-          "default": "true",
+          "default": true,
           "description": "Nest SubTasks"
         },
         "pm.sortBy": {
@@ -209,10 +209,26 @@
           "default": "duedate",
           "description": "Order tasks in Project tree",
           "enum": [
-            "duedate", "duedateDESC", "startdate", "dateadded", "priority", "project", "duestartdate", "duestartdatedesc", "dateupdated"
+            "duedate",
+            "duedateDESC",
+            "startdate",
+            "dateadded",
+            "priority",
+            "project",
+            "duestartdate",
+            "duestartdatedesc",
+            "dateupdated"
           ],
           "enumDescriptions": [
-            "Due date", "Due date DESC", "Start date", "Added", "Priority", "Project", "Due start date", "Due start date DESC", "Date updated"
+            "Due date",
+            "Due date DESC",
+            "Start date",
+            "Added",
+            "Priority",
+            "Project",
+            "Due start date",
+            "Due start date DESC",
+            "Date updated"
           ]
         }
       }
