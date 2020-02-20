@@ -1,65 +1,83 @@
-# pm-tasks README
+# Project Managment: Tasks
 
-This is the README for your extension "pm-tasks". After writing up a brief description, we recommend including the following sections.
+Easily manage your project tasks without quit your favorite code editor
 
-## Features
+![Panel Example](resources/screenshots/panel.png)
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+## Works with:
 
-For example if there is an image subfolder under your extension project workspace:
+- Teamwork ✔
+- Monday  _`coming soon`_
+- _...More PM's are coming_
 
-\!\[feature X\]\(images/feature-x.png\)
+## Usage
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+**Install and enable extension**
+> You'll need an `API KEY` from your Project Manager software
 
-## Requirements
+Go to **PM Tasks** Panel and configure a tasklist
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+![Tasklist](resources/screenshots/tasklist.gif)
+
+You can **Create, Complete and view Task Details**
 
 ## Extension Settings
+Use these settings to set your tasks workflow
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+|Setting|Does|Default|
+|---|---|---:|
+|`pm.taskList`|`[Array]` [Tasklist Object](#Tasklist-Object) _Recommended usage on **Workspace**_|`null`|
+|`pm.onlyMine`|Shows only tasks assigned to your user. Disable to view all tasks you have permission|`true`|
+|`pm.groupTasksByProject`|Group taskslists in Project tree. Disable to view unfiltered tasks|`true`|
+|`pm.nestSubTasks`|Shows parent tasks as a single element and subtasks inside them. Disable to show all tasks togheter without filters|`true`|
+|`pm.sortBy`|Sort tasks by due date, created date, priority or more. ASC and DESC options|`'duedate'`|
 
-For example:
 
-This extension contributes the following settings:
 
-* `myExtension.enable`: enable/disable this extension
-* `myExtension.thing`: set to `blah` to do something
+### Providers tokens
+`pm.teamworkToken`: Save in user configuration
 
-## Known Issues
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+## Tasklist Object
+
+> This configuration can be created with `PM Tasks: Configure Project` command
+
+```json
+{
+  "pm.taskList": [
+    {
+      "id": "1234567",
+      "label": "App Mayor Refactor",
+      "projectManager": "teamwork",
+      "projectId": "654321",
+      "projectName": "An Amazing Project"
+    }
+  ]
+}
+```
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
+Cooming:
+- Add more Project Managers
+- Better task details view
+- `Edit tasks`
 
-### 1.0.0
+### 0.1.0
 
-Initial release of ...
+Initial release of PM Tasks Extension
+- Teamwork:
+  - Add Teamwork Token to Settings
+  - Add Taskslist as Projects
+  - List tasks (filter options)
+  - Create task with responsible and due-date
+  - View tasks details `ID, Title, Description, Start and Due date, Responsible`
+  - Complete task
 
-### 1.0.1
+------------------------------
 
-Fixed issue #.
+#### Thank you!
 
-### 1.1.0
-
-Added features X, Y, and Z.
-
------------------------------------------------------------------------------------------------------------
-
-## Working with Markdown
-
-**Note:** You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+CMD+V` on macOS or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux) or `Cmd+Space` (macOS) to see a list of Markdown snippets
-
-### For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+* Send feedback and recommendations to n@nesslopz.com ✉️
+* Report [issues](https://github.com/nesslopz/PM-Tasks/issues) 🐞
+* PR are welcome! 😃

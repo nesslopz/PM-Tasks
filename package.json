@@ -3,7 +3,7 @@
   "displayName": "PM Tasks",
   "description": "Project Manager tasks integration with VSCode",
   "publisher": "nesslopz",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "license": "ISC",
   "preview": true,
   "icon": "resources/icon.png",
@@ -258,7 +258,7 @@
   },
   "bugs": {
     "url": "https://github.com/nesslopz/PM-Tasks/issues",
-    "email": "soy@nesslopz.com"
+    "email": "n@nesslopz.com"
   },
   "repository": {
     "type": "git",
