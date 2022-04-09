@@ -266,7 +266,7 @@
   },
   "homepage": "https://github.com/nesslopz/PM-Tasks/blob/master/README.md",
   "dependencies": {
-    "moment": "^2.24.0",
+    "moment": "^2.29.2",
     "request-light": "^0.2.5",
     "showdown": "^1.9.1"
   }
